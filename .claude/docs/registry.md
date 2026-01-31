@@ -13,6 +13,8 @@ This is my memory. I update it as I learn. I check it before making claims.
 | ux-craft | `.claude/skills/ux-craft/` | UI/UX development with distinctive design, accessibility, systematic enforcement |
 | security-guardian | `.claude/skills/security-guardian/` | AI-specific security analysis for vibe coding vulnerabilities, OWASP Top 10, secrets, BaaS misconfigs |
 | dev-patterns | `.claude/skills/dev-patterns/` | Development patterns and best practices. Agnostic core with dynamic stack-specific pattern generation |
+| seo-geo-copy | `.claude/skills/seo-geo-copy/` | SEO tradizionale + GEO (AI search) + copywriting persuasivo |
+| video-craft | `.claude/skills/video-craft/` | Generazione video programmatica da design system + contenuti |
 
 ---
 
