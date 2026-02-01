@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<!-- @video format="horizontal-16x9" fps="30" speed="fast" mode="chaos" codec="h264" output="./promo.mp4" -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech&family=VT323&family=Fira+Code:wght@400;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --font-display: "Orbitron", "Arial Black", sans-serif;
+  --font-body: "Share Tech", "Segoe UI", sans-serif;
+  --font-pixel: "VT323", monospace;
+  --font-mono: "Fira Code", monospace;
+  --cyan: hsl(180 100% 50%);
+  --pink: hsl(320 100% 58%);
+  --lime: hsl(88 100% 52%);
+  --purple: hsl(275 100% 62%);
+  --orange: hsl(28 100% 55%);
+  --bg: hsl(265 35% 6%);
+  --surface: hsl(265 28% 11%);
+  --text: hsl(60 10% 95%);
+  --muted: hsl(265 18% 62%);
+}
+
+body {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.scene {
+  position: absolute;
+  top: 0; left: 0;
+  width: 1920px; height: 1080px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  overflow: hidden;
+}
+.scene:first-child { opacity: 1; }
+
+/* ═══════ KEYFRAMES — ENTRANCES ═══════ */
+@keyframes scene-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slam-in {
+  0% { opacity: 0; transform: scale(3) rotate(-8deg); }
+  60% { opacity: 1; transform: scale(0.9) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes glitch-in {
+  0% { opacity: 0; transform: translate(40px, -20px) skewX(-10deg); filter: hue-rotate(90deg); }
+  20% { opacity: 0.7; transform: translate(-20px, 10px) skewX(5deg); filter: hue-rotate(-60deg); }
+  40% { opacity: 0.5; transform: translate(10px, -5px) skewX(-3deg); filter: hue-rotate(30deg); }
+  60% { opacity: 1; transform: translate(-5px, 3px) skewX(1deg); filter: hue-rotate(0deg); }
+  100% { opacity: 1; transform: translate(0, 0) skewX(0deg); filter: hue-rotate(0deg); }
+}
+@keyframes type-in {
+  from { width: 0; } to { width: 100%; }
+}
+@keyframes zoom-in {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0); }
+  70% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(80px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; } to { opacity: 1; }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-8px) rotate(-1deg); }
+  20% { transform: translateX(8px) rotate(1deg); }
+  30% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  50% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  70% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 10px currentColor); }
+  50% { filter: drop-shadow(0 0 40px currentColor) drop-shadow(0 0 80px currentColor); }
+}
+@keyframes card-cascade {
+  from { opacity: 0; transform: translateY(60px) scale(0.85); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.4; }
+  94% { opacity: 1; }
+  96% { opacity: 0.7; }
+  97% { opacity: 1; }
+}
+@keyframes scanline {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 4px; }
+}
+@keyframes chromatic {
+  0%, 100% { text-shadow: -2px 0 var(--cyan), 2px 0 var(--pink); }
+  33% { text-shadow: -3px 0 var(--pink), 3px 0 var(--lime); }
+  66% { text-shadow: -2px 0 var(--lime), 2px 0 var(--cyan); }
+}
+
+/* ═══════ TRANSITIONS ═══════ */
+@keyframes trans-a-glitch {
+  0% { opacity: 1; filter: none; }
+  25% { opacity: 0.8; transform: translate(10px, -5px); filter: hue-rotate(90deg); }
+  50% { opacity: 0.5; transform: translate(-8px, 3px); filter: hue-rotate(-60deg); }
+  100% { opacity: 0; filter: none; }
+}
+@keyframes trans-b-glitch {
+  0% { opacity: 0; filter: hue-rotate(60deg); }
+  50% { opacity: 0.6; transform: translate(-5px, 2px); filter: hue-rotate(-30deg); }
+  100% { opacity: 1; transform: translate(0,0); filter: none; }
+}
+@keyframes trans-a-wipe-right {
+  from { clip-path: inset(0 0 0 0); } to { clip-path: inset(0 0 0 100%); }
+}
+@keyframes trans-b-wipe-right {
+  from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); }
+}
+@keyframes trans-a-zoom-out {
+  from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.5); }
+}
+@keyframes trans-b-zoom-in {
+  from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); }
+}
+@keyframes trans-a-fade { from { opacity: 1; } to { opacity: 0; } }
+@keyframes trans-b-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes trans-a-slam {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.3) rotate(10deg); }
+}
+@keyframes trans-b-slam {
+  0% { opacity: 0; transform: scale(2.5) rotate(-5deg); }
+  60% { opacity: 1; transform: scale(0.95) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* ═══════ BG EFFECTS ═══════ */
+@keyframes grid-pulse {
+  0%, 100% { opacity: 0.06; }
+  50% { opacity: 0.12; }
+}
+@keyframes gradient-drift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCENE 1: HOOK — ARREST (0ms → 2500ms)
+     Pattern interrupt. Glitch. Short violent text.
+     ═══════════════════════════════════════════════════════════════ -->
+<!-- @scene name="Hook" duration="2500ms" transition-out="glitch" transition-duration="400ms" -->
+<div class="scene" id="s0" style="
+  background: var(--bg);
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.015) 2px, rgba(255,255,255,0.015) 4px);
+  z-index: 1;
+">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:40px;text-align:center;">
+    <!-- Main headline — glitch in -->
+    <div class="el" style="
+      font-family: var(--font-display);
+      font-size: 110px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text);
+      opacity: 0;
+      animation: glitch-in 500ms cubic-bezier(0.23, 1, 0.32, 1) 300ms forwards,
+                 chromatic 200ms linear 300ms 3,
+                 shake 400ms ease 800ms 1;
+    ">YOUR AI FORGETS</div>
+    <!-- Sub — delayed, pixel font -->
+    <div class="el" style="
+      font-family: var(--font-pixel);
+      font-size: 42px;
+      color: var(--pink);
+      text-shadow: 0 0 20px hsl(320 100% 58% / 0.6);
+      opacity: 0;
+      animation: fade-in 200ms ease 1200ms forwards,
+                 neon-flicker 300ms linear 1400ms 2;
+    ">> EVERY. SINGLE. SESSION.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCENE 2: ESCALATE — STAT (2500ms → 5400ms)
+     Big number, emotional impact
+     ═══════════════════════════════════════════════════════════════ -->
+<!-- @scene name="Stat" duration="2500ms" transition-out="wipe-right" transition-duration="400ms" -->
+<div class="scene" id="s1" style="
+  background: var(--surface);
+  z-index: 2;
+  animation: scene-reveal 1ms ease 2500ms both;
+">
+  <!-- Grid overlay -->
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:60px 60px;animation:grid-pulse 4s ease-in-out infinite;pointer-events:none;"></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;position:relative;">
+    <!-- Big stat -->
+    <div class="el" style="
+      font-family: var(--font-display);
+      font-size: 220px;
+      font-weight: 900;
+      color: var(--cyan);
+      text-shadow: 0 0 40px hsl(180 100% 50% / 0.5), 0 0 100px hsl(180 100% 50% / 0.2);
+      line-height: 1;
+      opacity: 0;
+      animation: slam-in 400ms cubic-bezier(0.23, 1, 0.32, 1) 2800ms forwards,
+                 pulse-glow 1500ms ease 3200ms 1;
+    ">60%</div>
+    <!-- Label -->
+    <div class="el" style="
+      font-family: var(--font-body);
+      font-size: 36px;
+      color: var(--muted);
+      opacity: 0;
+      animation: slide-up 350ms ease 3300ms forwards;
+    ">of AI code repeats the same errors</div>
+    <!-- Reason -->
+    <div class="el" style="
+      font-family: var(--font-pixel);
+      font-size: 28px;
+      color: var(--pink);
+      opacity: 0;
+      animation: fade-in 250ms ease 3800ms forwards;
+    ">> NO MEMORY BETWEEN SESSIONS</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCENE 3: SOLUTION INTRO (5400ms → 8300ms)
+     Chrome headline, dramatic entrance
+     ═══════════════════════════════════════════════════════════════ -->
+<!-- @scene name="Solution" duration="2500ms" transition-out="slam" transition-duration="350ms" -->
+<div class="scene" id="s2" style="
+  background: linear-gradient(135deg, hsl(265 35% 6%), hsl(265 28% 14%));
+  z-index: 3;
+  animation: scene-reveal 1ms ease 5400ms both;
+">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:48px;text-align:center;">
+    <!-- Chrome title -->
+    <div class="el" style="
+      font-family: var(--font-display);
+      font-size: 90px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: linear-gradient(145deg, hsl(0 0% 92%), hsl(220 12% 68%), hsl(0 0% 94%), hsl(220 12% 58%), hsl(0 0% 88%));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(3px 3px 0 var(--pink));
+      opacity: 0;
+      animation: zoom-in 400ms cubic-bezier(0.34, 1.56, 0.64, 1) 5700ms forwards;
+    ">MEET THE FIX</div>
+    <!-- Subtitle -->
+    <div class="el" style="
+      font-family: var(--font-display);
+      font-size: 38px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--cyan);
+      text-shadow: 0 0 20px hsl(180 100% 50% / 0.4);
+      opacity: 0;
+      animation: slide-up 350ms ease 6200ms forwards;
+    ">CLAUDE DEVELOPMENT FRAMEWORK</div>
+    <!-- Tagline -->
+    <div class="el" style="
+      font-family: var(--font-body);
+      font-size: 30px;
+      color: var(--muted);
+      opacity: 0;
+      animation: fade-in 300ms ease 6700ms forwards;
+    ">Memory + Skills + Process for AI-Assisted Development</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCENE 4: CORE — 3 PILLARS (8300ms → 12200ms)
+     Three cards, staggered cascade, high energy
+     ═══════════════════════════════════════════════════════════════ -->
+<!-- @scene name="Pillars" duration="3500ms" transition-out="glitch" transition-duration="400ms" -->
+<div class="scene" id="s3" style="
+  background: var(--bg);
+  z-index: 4;
+  animation: scene-reveal 1ms ease 8300ms both;
+">
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);background-size:80px 80px;pointer-events:none;"></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:40px;width:100%;padding:0 100px;">
+    <!-- Section title -->
+    <div class="el" style="
+      font-family: var(--font-pixel);
+      font-size: 24px;
+      color: var(--pink);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      opacity: 0;
+      animation: fade-in 200ms ease 8600ms forwards;
+    ">> THREE PILLARS</div>
+    <!-- Cards row -->
+    <div style="display:flex;gap:32px;width:100%;justify-content:center;">
+      <!-- Card 1: Registry -->
+      <div class="el" style="
+        background: var(--surface);
+        border: 2px solid hsl(180 100% 50% / 0.3);
+        border-radius: 12px;
+        padding: 48px 40px;
+        flex: 1;
+        max-width: 440px;
+        text-align: center;
+        box-shadow: 0 0 30px hsl(180 100% 50% / 0.1);
+        opacity: 0;
+        animation: card-cascade 400ms cubic-bezier(0.34, 1.56, 0.64, 1) 8900ms forwards;
+      ">
+        <div style="font-size:56px;margin-bottom:16px;">🧠</div>
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--cyan);margin-bottom:12px;">Registry</div>
+        <div style="font-size:22px;color:var(--muted);">Memory that persists</div>
+      </div>
+      <!-- Card 2: Specs -->
+      <div class="el" style="
+        background: var(--surface);
+        border: 2px solid hsl(320 100% 58% / 0.3);
+        border-radius: 12px;
+        padding: 48px 40px;
+        flex: 1;
+        max-width: 440px;
+        text-align: center;
+        box-shadow: 0 0 30px hsl(320 100% 58% / 0.1);
+        opacity: 0;
+        animation: card-cascade 400ms cubic-bezier(0.34, 1.56, 0.64, 1) 9200ms forwards;
+      ">
+        <div style="font-size:56px;margin-bottom:16px;">📋</div>
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--pink);margin-bottom:12px;">Specs</div>
+        <div style="font-size:22px;color:var(--muted);">Think before coding</div>
+      </div>
+      <!-- Card 3: Decisions -->
+      <div class="el" style="
+        background: var(--surface);
+        border: 2px solid hsl(88 100% 52% / 0.3);
+        border-radius: 12px;
+        padding: 48px 40px;
+        flex: 1;
+        max-width: 440px;
+        text-align: center;
+        box-shadow: 0 0 30px hsl(88 100% 52% / 0.1);
+        opacity: 0;
+        animation: card-cascade 400ms cubic-bezier(0.34, 1.56, 0.64, 1) 9500ms forwards;
+      ">
+        <div style="font-size:56px;margin-bottom:16px;">🔒</div>
+        <div style="font-family:var(--font-display);font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--lime);margin-bottom:12px;">Decisions</div>
+        <div style="font-size:22px;color:var(--muted);">Never self-contradict</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCENE 5: CLIMAX — 6 SKILLS (12200ms → 16600ms)
+     Grid of 6 skill cards, rapid stagger, neon borders
+     ═══════════════════════════════════════════════════════════════ -->
+<!-- @scene name="Skills" duration="4000ms" transition-out="wipe-right" transition-duration="400ms" -->
+<div class="scene" id="s4" style="
+  background: var(--surface);
+  z-index: 5;
+  animation: scene-reveal 1ms ease 12200ms both;
+">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:36px;width:100%;padding:0 80px;">
+    <!-- Title -->
+    <div class="el" style="
+      font-family: var(--font-display);
+      font-size: 52px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--cyan);
+      text-shadow: 0 0 20px hsl(180 100% 50% / 0.4);
+      opacity: 0;
+      animation: slam-in 350ms cubic-bezier(0.23, 1, 0.32, 1) 12500ms forwards;
+    ">6 POWER SKILLS</div>
+    <!-- Grid 3x2 -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;width:100%;">
+      <!-- ui-craft -->
+      <div class="el" style="background:hsl(265 25% 14%);border-left:4px solid var(--cyan);border-radius:8px;padding:28px 32px;opacity:0;animation:pop-in 300ms cubic-bezier(0.34,1.56,0.64,1) 12900ms forwards;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px;">
+          <span style="font-size:36px;">🎨</span>
+          <span style="font-family:var(--font-display);font-size:22px;font-weight:700;text-transform:uppercase;color:var(--cyan);">ui-craft</span>
+        </div>
+        <div style="font-size:20px;color:var(--muted);">Distinctive UI. Never generic.</div>
+      </div>
+      <!-- dev-patterns -->
+      <div class="el" style="background:hsl(265 25% 14%);border-left:4px solid var(--pink);border-radius:8px;padding:28px 32px;opacity:0;animation:pop-in 300ms cubic-bezier(0.34,1.56,0.64,1) 13100ms forwards;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px;">
+          <span style="font-size:36px;">⚡</span>
+          <span style="font-family:var(--font-display);font-size:22px;font-weight:700;text-transform:uppercase;color:var(--pink);">dev-patterns</span>
+        </div>
+        <div style="font-size:20px;color:var(--muted);">SOLID + your stack.</div>
+      </div>
+      <!-- security-guardian -->
+      <div class="el" style="background:hsl(265 25% 14%);border-left:4px solid var(--lime);border-radius:8px;padding:28px 32px;opacity:0;animation:pop-in 300ms cubic-bezier(0.34,1.56,0.64,1) 13300ms forwards;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px;">
+          <span style="font-size:36px;">🛡️</span>
+          <span style="font-family:var(--font-display);font-size:22px;font-weight:700;text-transform:uppercase;color:var(--lime);">security</span>
+        </div>
+        <div style="font-size:20px;color:var(--muted);">OWASP + AI-specific.</div>
+      </div>
+      <!-- seo-geo-copy -->
+      <div class="el" style="background:hsl(265 25% 14%);border-left:4px solid var(--orange);border-radius:8px;padding:28px 32px;opacity:0;animation:pop-in 300ms cubic-bezier(0.34,1.56,0.64,1) 13500ms forwards;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px;">
+          <span style="font-size:36px;">📈</span>
+          <span style="font-family:var(--font-display);font-size:22px;font-weight:700;text-transform:uppercase;color:var(--orange);">seo-geo-copy</span>
+        </div>
+        <div style="font-size:20px;color:var(--muted);">Google + AI search.</div>
+      </div>
+      <!-- video-craft -->
+      <div class="el" style="background:hsl(265 25% 14%);border-left:4px solid var(--purple);border-radius:8px;padding:28px 32px;opacity:0;animation:pop-in 300ms cubic-bezier(0.34,1.56,0.64,1) 13700ms forwards;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px;">
+          <span style="font-size:36px;">🎬</span>
+          <span style="font-family:var(--font-display);font-size:22px;font-weight:700;text-transform:uppercase;color:var(--purple);">video-craft</span>
+        </div>
+        <div style="font-size:20px;color:var(--muted);">Code to video. 107 anims.</div>
+      </div>
+      <!-- techdebt -->
+      <div class="el" style="background:hsl(265 25% 14%);border-left:4px solid hsl(45 100% 55%);border-radius:8px;padding:28px 32px;opacity:0;animation:pop-in 300ms cubic-bezier(0.34,1.56,0.64,1) 13900ms forwards;">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px;">
+          <span style="font-size:36px;">🔍</span>
+          <span style="font-family:var(--font-display);font-size:22px;font-weight:700;text-transform:uppercase;color:hsl(45 100% 55%);">techdebt</span>
+        </div>
+        <div style="font-size:20px;color:var(--muted);">Kill dead code fast.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCENE 6: BEFORE/AFTER (16600ms → 19800ms)
+     Split screen contrast
+     ═══════════════════════════════════════════════════════════════ -->
+<!-- @scene name="Contrast" duration="2800ms" transition-out="fade" transition-duration="400ms" -->
+<div class="scene" id="s5" style="
+  z-index: 6;
+  animation: scene-reveal 1ms ease 16600ms both;
+">
+  <!-- Split background -->
+  <div style="position:absolute;left:0;top:0;width:50%;height:100%;background:hsl(0 70% 12%);"></div>
+  <div style="position:absolute;right:0;top:0;width:50%;height:100%;background:hsl(140 50% 8%);"></div>
+  <!-- Content -->
+  <div style="display:flex;width:100%;height:100%;position:relative;">
+    <!-- WITHOUT -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:60px;">
+      <div class="el" style="
+        font-family:var(--font-display);font-size:36px;font-weight:900;text-transform:uppercase;
+        color:hsl(0 70% 55%);letter-spacing:0.1em;
+        opacity:0;animation:slam-in 350ms ease 16900ms forwards;
+      ">WITHOUT</div>
+      <div class="el" style="font-size:26px;color:hsl(0 30% 65%);opacity:0;animation:slide-up 250ms ease 17200ms forwards;">Hallucinated functions</div>
+      <div class="el" style="font-size:26px;color:hsl(0 30% 65%);opacity:0;animation:slide-up 250ms ease 17400ms forwards;">Duplicate code</div>
+      <div class="el" style="font-size:26px;color:hsl(0 30% 65%);opacity:0;animation:slide-up 250ms ease 17600ms forwards;">Forgotten decisions</div>
+      <div class="el" style="font-size:26px;color:hsl(0 30% 65%);opacity:0;animation:slide-up 250ms ease 17800ms forwards;">Generic AI slop</div>
+    </div>
+    <!-- Divider -->
+    <div style="position:absolute;left:50%;top:10%;bottom:10%;width:3px;background:linear-gradient(180deg,transparent,var(--cyan),var(--pink),transparent);transform:translateX(-50%);"></div>
+    <!-- WITH -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:60px;">
+      <div class="el" style="
+        font-family:var(--font-display);font-size:36px;font-weight:900;text-transform:uppercase;
+        color:var(--lime);letter-spacing:0.1em;
+        opacity:0;animation:slam-in 350ms ease 17100ms forwards;
+      ">WITH FRAMEWORK</div>
+      <div class="el" style="font-size:26px;color:hsl(140 30% 70%);opacity:0;animation:slide-up 250ms ease 17400ms forwards;">Verified memory</div>
+      <div class="el" style="font-size:26px;color:hsl(140 30% 70%);opacity:0;animation:slide-up 250ms ease 17600ms forwards;">Anti-duplication</div>
+      <div class="el" style="font-size:26px;color:hsl(140 30% 70%);opacity:0;animation:slide-up 250ms ease 17800ms forwards;">Decisions tracked</div>
+      <div class="el" style="font-size:26px;color:hsl(140 30% 70%);opacity:0;animation:slide-up 250ms ease 18000ms forwards;">Distinctive design</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SCENE 7: CTA — CONVERT (19800ms → 23000ms)
+     Final call to action, neon glow, pulse
+     ═══════════════════════════════════════════════════════════════ -->
+<!-- @scene name="CTA" duration="3200ms" -->
+<div class="scene" id="s6" style="
+  background: var(--bg);
+  z-index: 7;
+  animation: scene-reveal 1ms ease 19800ms both;
+">
+  <!-- Gradient bg -->
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%, hsl(265 40% 12%) 0%, var(--bg) 70%);pointer-events:none;"></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:48px;text-align:center;position:relative;">
+    <!-- Headline -->
+    <div class="el" style="
+      font-family: var(--font-display);
+      font-size: 80px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      opacity: 0;
+      animation: slam-in 400ms cubic-bezier(0.23, 1, 0.32, 1) 20100ms forwards,
+                 chromatic 300ms linear 20500ms 2;
+    ">STOP FIGHTING YOUR AI</div>
+    <!-- Sub -->
+    <div class="el" style="
+      font-family: var(--font-display);
+      font-size: 44px;
+      font-weight: 700;
+      color: var(--cyan);
+      text-shadow: 0 0 30px hsl(180 100% 50% / 0.5);
+      opacity: 0;
+      animation: slide-up 350ms ease 20700ms forwards,
+                 pulse-glow 1500ms ease 21000ms infinite;
+    ">START DIRECTING IT.</div>
+    <!-- Button -->
+    <div class="el" style="
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--bg);
+      background: var(--cyan);
+      padding: 20px 56px;
+      border-radius: 6px;
+      box-shadow: 0 0 30px hsl(180 100% 50% / 0.4), 0 0 60px hsl(180 100% 50% / 0.15);
+      opacity: 0;
+      animation: pop-in 350ms cubic-bezier(0.34, 1.56, 0.64, 1) 21200ms forwards;
+    ">OPEN SOURCE — GET IT NOW</div>
+    <!-- Badge -->
+    <div class="el" style="
+      font-family: var(--font-pixel);
+      font-size: 22px;
+      color: var(--muted);
+      opacity: 0;
+      animation: fade-in 300ms ease 21700ms forwards;
+    ">github.com/claude-development-framework</div>
+  </div>
+</div>
+
+<!-- Preview controller — skipped during render (capture.ts sets __VIDEO_RENDER__) -->
+<script>
+(function() {
+  if (window.__VIDEO_RENDER__) return;
+  const scenes = document.querySelectorAll('.scene');
+  if (scenes.length === 0) return;
+  let current = 0;
+
+  scenes.forEach(s => {
+    s.querySelectorAll('.el').forEach(el => {
+      el.setAttribute('data-anim', el.style.animation || '');
+    });
+  });
+
+  function show(idx) {
+    scenes.forEach((s, i) => {
+      if (i === idx) {
+        s.style.visibility = 'visible';
+        s.style.opacity = '1';
+        s.style.pointerEvents = 'auto';
+        s.querySelectorAll('.el').forEach(el => {
+          el.style.animation = 'none';
+          void el.offsetWidth;
+          const orig = el.getAttribute('data-anim') || '';
+          const zeroed = orig.replace(/(\d+)ms(\s+(?:both|forwards))/g, '0ms$2');
+          requestAnimationFrame(() => { el.style.animation = zeroed; });
+        });
+      } else {
+        s.style.visibility = 'hidden';
+        s.style.opacity = '0';
+        s.style.pointerEvents = 'none';
+        s.style.animation = 'none';
+      }
+    });
+    current = idx;
+    if (counter) counter.textContent = (idx + 1) + '/' + scenes.length;
+  }
+
+  const nav = document.createElement('div');
+  nav.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;gap:12px;align-items:center;background:rgba(0,0,0,0.85);padding:10px 20px;border-radius:8px;font-family:system-ui;font-size:14px;color:#fff;';
+  const prev = document.createElement('button');
+  prev.textContent = '\u25C0 Prev';
+  prev.style.cssText = 'background:none;border:1px solid #555;color:#fff;padding:6px 14px;cursor:pointer;border-radius:4px;';
+  prev.onclick = () => show((current - 1 + scenes.length) % scenes.length);
+  const next = document.createElement('button');
+  next.textContent = 'Next \u25B6';
+  next.style.cssText = prev.style.cssText;
+  next.onclick = () => show((current + 1) % scenes.length);
+  const counter = document.createElement('span');
+  counter.style.cssText = 'min-width:40px;text-align:center;';
+  const autoBtn = document.createElement('button');
+  autoBtn.textContent = '\u25B6 Play';
+  autoBtn.style.cssText = prev.style.cssText;
+  let timer = null;
+  autoBtn.onclick = () => {
+    if (timer) { clearInterval(timer); timer = null; autoBtn.textContent = '\u25B6 Play'; }
+    else { timer = setInterval(() => show((current + 1) % scenes.length), 2500); autoBtn.textContent = '\u23F8 Stop'; }
+  };
+  nav.append(prev, counter, next, autoBtn);
+  document.body.appendChild(nav);
+  show(0);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') show((current + 1) % scenes.length);
+    if (e.key === 'ArrowLeft') show((current - 1 + scenes.length) % scenes.length);
+  });
+})();
+</script>
+</body>
+</html>
