@@ -9,66 +9,50 @@
   "sounds": {
     "element-appear": {
       "label": "Soft click with subtle whoosh",
-      "synth": { "type": "Synth", "config": { "oscillator": { "type": "triangle" }, "envelope": { "attack": 0.005, "decay": 0.1, "sustain": 0, "release": 0.15 } } },
-      "effects": [{ "type": "Reverb", "config": { "decay": 0.6, "wet": 0.2 } }],
-      "note": "C6",
-      "duration": "32n",
+      "strudel": "note('c6').s('triangle').room(0.2).gain(0.3)",
+      "duration": 60,
       "velocity": 0.3
     },
     "text-typing": {
       "label": "Light tick",
-      "synth": { "type": "Synth", "config": { "oscillator": { "type": "square" }, "envelope": { "attack": 0.001, "decay": 0.03, "sustain": 0, "release": 0.02 } } },
-      "effects": [{ "type": "Filter", "config": { "frequency": 4000, "type": "lowpass" } }],
-      "note": "G6",
-      "duration": "64n",
+      "strudel": "note('g6').s('square').lpf(4000).gain(0.15)",
+      "duration": 30,
       "velocity": 0.15
     },
     "number-count": {
       "label": "Discrete tick",
-      "synth": { "type": "Synth", "config": { "oscillator": { "type": "sine" }, "envelope": { "attack": 0.001, "decay": 0.05, "sustain": 0, "release": 0.05 } } },
-      "effects": [],
-      "note": "E6",
-      "duration": "64n",
+      "strudel": "note('e6').s('sine').gain(0.25)",
+      "duration": 50,
       "velocity": 0.25
     },
     "card-flip": {
       "label": "Soft page turn",
-      "synth": { "type": "NoiseSynth", "config": { "noise": { "type": "white" }, "envelope": { "attack": 0.01, "decay": 0.12, "sustain": 0, "release": 0.08 } } },
-      "effects": [{ "type": "Filter", "config": { "frequency": 3000, "type": "bandpass", "Q": 1.5 } }],
-      "note": null,
-      "duration": "16n",
+      "strudel": "s('white').lpf(3000).hpf(1500).gain(0.2)",
+      "duration": 100,
       "velocity": 0.2
     },
     "scene-transition": {
       "label": "Fade pad",
-      "synth": { "type": "Synth", "config": { "oscillator": { "type": "sine" }, "envelope": { "attack": 0.3, "decay": 0.5, "sustain": 0.2, "release": 0.8 } } },
-      "effects": [{ "type": "Reverb", "config": { "decay": 2.0, "wet": 0.5 } }],
-      "note": "C5",
-      "duration": "2n",
+      "strudel": "note('c5').s('sine').room(0.5).gain(0.25).slow(2)",
+      "duration": 500,
       "velocity": 0.25
     },
     "cta-final": {
       "label": "Resolving chime",
-      "synth": { "type": "Synth", "config": { "oscillator": { "type": "sine" }, "envelope": { "attack": 0.005, "decay": 0.8, "sustain": 0, "release": 1.0 } } },
-      "effects": [{ "type": "Reverb", "config": { "decay": 2.5, "wet": 0.4 } }],
-      "note": "G5",
-      "duration": "4n",
+      "strudel": "note('g5').s('sine').room(0.4).gain(0.45)",
+      "duration": 300,
       "velocity": 0.45
     },
     "logo-reveal": {
       "label": "Single piano note",
-      "synth": { "type": "Synth", "config": { "oscillator": { "type": "triangle" }, "envelope": { "attack": 0.005, "decay": 1.2, "sustain": 0, "release": 1.5 } } },
-      "effects": [{ "type": "Reverb", "config": { "decay": 3.0, "wet": 0.35 } }],
-      "note": "C5",
-      "duration": "2n",
+      "strudel": "note('c5').s('triangle').room(0.35).gain(0.5).slow(2)",
+      "duration": 500,
       "velocity": 0.5
     },
     "stat-progress": {
       "label": "Ascending tick",
-      "synth": { "type": "Synth", "config": { "oscillator": { "type": "triangle" }, "envelope": { "attack": 0.001, "decay": 0.06, "sustain": 0, "release": 0.04 } } },
-      "effects": [],
-      "note": "C6",
-      "duration": "64n",
+      "strudel": "note('c6').s('triangle').gain(0.2)",
+      "duration": 50,
       "velocity": 0.2
     }
   }

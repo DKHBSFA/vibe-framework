@@ -2,6 +2,51 @@
   "style": "jazz",
   "description": "Warm piano trio with walking bass, brush kit textures, and extended chord voicings with swing feel.",
   "family": "tonal",
+
+  "impact_frame": {
+    "enabled": true,
+    "duration_ms": 3000,
+    "layers": {
+      "0ms": {
+        "role": "attention_grabber",
+        "strudel": "chord('Bbmaj7').voicing().s('piano').room(0.3).gain(0.9)"
+      },
+      "100ms": {
+        "role": "genre_signifier",
+        "strudel": "s('jazz_ride').struct('t').hpf(4000).room(0.25).gain(0.65)"
+      },
+      "500ms": {
+        "role": "hook_motif",
+        "strudel": "note('<d4 f4 a4 bb4>').s('piano').room(0.25).gain(0.7)"
+      }
+    }
+  },
+
+  "voiceover_mode": {
+    "enabled": false,
+    "layers": {
+      "sub_bed": {
+        "frequency_focus": "below_200hz",
+        "instruments": ["bass"],
+        "gain": 0.8,
+        "filter": { "lpf": 200 }
+      },
+      "air_bed": {
+        "frequency_focus": "above_4000hz",
+        "instruments": ["ride", "brush"],
+        "gain": 0.6,
+        "filter": { "hpf": 4000 }
+      },
+      "mid_punctuation": {
+        "frequency_focus": "200hz_4000hz",
+        "instruments": ["piano"],
+        "gain": 0.25,
+        "sparse": true,
+        "max_events_per_bar": 2
+      }
+    }
+  },
+
   "temporal": {
     "bpm": 120,
     "range": [100, 140],
@@ -14,76 +59,70 @@
       "maxTempoDeviationPercent": 5
     }
   },
+
   "key": "Bb",
-  "instruments": {
+
+  "sounds": {
     "piano": {
-      "type": "Sampler",
-      "sampleMap": "piano",
-      "fallbackPatch": "piano-acoustic",
-      "volume": -18,
-      "range": ["A1", "C7"],
-      "optimal_range": ["F2", "C6"],
-      "effects": [
-        { "type": "Reverb", "config": { "decay": 2.0, "wet": 0.25 } }
-      ]
+      "source": "piano",
+      "room": 0.25,
+      "gain": 0.7
     },
     "bass": {
-      "type": "MonoSynth",
-      "config": {
-        "oscillator": { "type": "triangle" },
-        "filter": { "Q": 1, "type": "lowpass", "rolloff": -12 },
-        "envelope": { "attack": 0.02, "decay": 0.4, "sustain": 0.6, "release": 0.5 },
-        "filterEnvelope": { "attack": 0.01, "decay": 0.3, "sustain": 0.4, "release": 0.4, "baseFrequency": 300, "octaves": 1.5 }
-      },
-      "volume": -14,
-      "range": ["E1", "G3"],
-      "optimal_range": ["E1", "E3"],
-      "effects": [
-        { "type": "Compressor", "config": { "threshold": -14, "ratio": 3, "attack": 0.02, "release": 0.2 } },
-        { "type": "Reverb", "config": { "decay": 1.2, "wet": 0.15 } }
-      ]
+      "source": "triangle",
+      "lpf": 800,
+      "room": 0.15,
+      "gain": 0.8
     },
     "ride": {
-      "type": "MetalSynth",
-      "config": {
-        "frequency": 350,
-        "envelope": { "attack": 0.001, "decay": 0.6, "release": 0.4 },
-        "harmonicity": 5.1,
-        "modulationIndex": 24,
-        "resonance": 5000,
-        "octaves": 1
-      },
-      "volume": -20,
-      "effects": [
-        { "type": "Filter", "config": { "frequency": 8000, "type": "highpass", "rolloff": -12 } },
-        { "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }
-      ]
+      "source": "jazz_ride",
+      "hpf": 4000,
+      "room": 0.2,
+      "gain": 0.5
     },
     "brush": {
-      "type": "NoiseSynth",
-      "config": {
-        "noise": { "type": "pink" },
-        "envelope": { "attack": 0.02, "decay": 0.15, "sustain": 0.0, "release": 0.1 }
-      },
-      "volume": -24,
-      "effects": [
-        { "type": "Filter", "config": { "frequency": 5000, "type": "bandpass", "Q": 2 } },
-        { "type": "Reverb", "config": { "decay": 1.0, "wet": 0.2 } }
-      ]
+      "source": "pink",
+      "lpf": 5000,
+      "hpf": 2000,
+      "room": 0.2,
+      "gain": 0.35
     }
   },
-  "master": {
-    "effects": [
-      { "type": "Compressor", "config": { "threshold": -14, "ratio": 2.5, "attack": 0.03, "release": 0.2 } },
-      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
-        { "type": "Limiter", "config": { "threshold": -3 } }
-    ]
+
+  "patterns": {
+    "intro": {
+      "rhythm": "stack(s('jazz_ride').struct('t(7,16)').gain(sine.range(0.4,0.7)), s('pink').struct('~ ~ t ~ ~ ~ t ~').lpf(5000).hpf(2000).gain(0.3))",
+      "harmony": "silent",
+      "bass": "note('<bb1 c2 d2 f2>').s('triangle').lpf(800).room(0.15).gain(0.65).slow(4)"
+    },
+    "build": {
+      "rhythm": "stack(s('jazz_ride').struct('t(9,16)').gain(sine.range(0.5,0.8)), s('pink').struct('~ ~ t ~ ~ ~ t ~').lpf(5000).hpf(2000).gain(0.4))",
+      "harmony": "chord('<Cm7 F7 Bbmaj7 Bbmaj7 Cm7 F7 Dmaj7 G7>').voicing().s('piano').room(0.25).gain(0.6)",
+      "bass": "note('<c2 d2 e2 f2> <f2 e2 eb2 d2> <bb1 c2 d2 f2> <bb1 a1 g1 f1>').s('triangle').lpf(800).room(0.15).gain(0.7)"
+    },
+    "climax": {
+      "rhythm": "stack(s('jazz_ride').struct('t(11,16)').gain(sine.range(0.6,0.9)), s('pink').struct('t ~ t ~ t ~ t ~').lpf(5000).hpf(2000).gain(0.5))",
+      "harmony": "chord('<Cm7 F7 Bbmaj7 Bbmaj7 Cm7 F7 Dmaj7 G7>').voicing().s('piano').room(0.25).gain(0.75)",
+      "bass": "note('<c2 d2 e2 f2> <f2 e2 eb2 d2> <bb1 c2 d2 f2> <bb1 a1 g1 f1>').s('triangle').lpf(900).room(0.15).gain(0.8)"
+    },
+    "resolve": {
+      "rhythm": "s('jazz_ride').struct('t ~ ~ ~ t ~ ~ ~').gain(perlin.range(0.3,0.5))",
+      "harmony": "chord('<Bbmaj7>').voicing().s('piano').room(0.3).gain(perlin.range(0.35,0.5)).slow(2)",
+      "bass": "note('bb1').s('triangle').lpf(700).room(0.15).gain(0.5).slow(2)"
+    }
   },
+
+  "master": {
+    "compressor": true,
+    "limiter": true
+  },
+
   "progression": {
     "chords": ["IImaj7", "V7", "Imaj7", "Imaj7", "IImaj7", "V7", "IIImaj7", "VI7"],
     "scale": "dorian",
     "bars_per_chord": 1
   },
+
   "harmonic_system": {
     "type": "functional_tonal",
     "functions": {
@@ -95,15 +134,17 @@
     },
     "cadences": {
       "primary": "authentic",
-      "reasoning": "V7→Imaj7 = authentic; final chords IIImaj7→VI7 = deceptive-like secondary motion"
+      "reasoning": "V7->Imaj7 = authentic; final chords IIImaj7->VI7 = deceptive-like secondary motion"
     }
   },
+
   "arc": {
     "intro": { "layers": ["bass", "ride", "brush"], "velocity": 0.35 },
     "build": { "layers": ["piano", "bass", "ride", "brush"], "velocity": 0.5 },
     "climax": { "layers": ["piano", "bass", "ride", "brush"], "velocity": 0.75 },
     "resolve": { "layers": ["piano", "bass", "ride"], "velocity": 0.3 }
   },
+
   "orchestration_limits": {
     "intro": { "max_simultaneous_voices": 3 },
     "build": { "max_simultaneous_voices": 4 },
@@ -112,6 +153,7 @@
     "hard_limit": 6,
     "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
   },
+
   "form": {
     "type": "periodo_tematico",
     "phrases": [
@@ -123,59 +165,42 @@
       "resolve": "inversion_of_antecedent"
     }
   },
-  "rhythmGrid": {
-    "_note": "16-step velocity arrays (16th notes per 4/4 bar). 0 = silence, 0.1-1.0 = hit velocity. Jazz swing: long-short 8th feel, ride pattern, brushes, kick on 1&3. Steps 1-2 = swung 8th 1, 3-4 = swung 8th 2, etc.",
-    "intro": {
-      "ride":  [0.7, 0, 0, 0.4, 0.6, 0, 0, 0.3, 0.7, 0, 0, 0.4, 0.6, 0, 0, 0.3],
-      "brush": [0, 0, 0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0]
-    },
-    "build": {
-      "ride":  [0.8, 0, 0, 0.5, 0.7, 0, 0, 0.4, 0.8, 0, 0, 0.5, 0.7, 0, 0, 0.4],
-      "brush": [0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0]
-    },
-    "climax": {
-      "ride":  [0.9, 0, 0, 0.6, 0.8, 0, 0, 0.5, 0.9, 0, 0, 0.6, 0.8, 0, 0, 0.5],
-      "brush": [0.3, 0, 0.5, 0, 0.3, 0, 0.5, 0, 0.3, 0, 0.5, 0, 0.3, 0, 0.5, 0.3]
-    },
-    "resolve": {
-      "ride":  [0.6, 0, 0, 0.3, 0.5, 0, 0, 0.2, 0.6, 0, 0, 0.3, 0.5, 0, 0, 0]
-    }
-  },
+
   "voiceLeading": {
     "_key": "Bb major (jazz extended voicings with 7ths and 9ths)",
     "chords": {
-      "IImaj7": {
-        "root":   ["C3", "E3", "G3", "Bb3"],
-        "drop2":  ["E2", "C3", "G3", "Bb3"],
-        "spread": ["C2", "G3", "Bb3", "E4"]
+      "Cm7": {
+        "root": ["C3", "Eb3", "G3", "Bb3"],
+        "drop2": ["Eb2", "C3", "G3", "Bb3"],
+        "spread": ["C2", "G3", "Bb3", "Eb4"]
       },
-      "V7": {
-        "root":   ["F3", "A3", "C4", "Eb4"],
-        "drop2":  ["A2", "F3", "C4", "Eb4"],
+      "F7": {
+        "root": ["F3", "A3", "C4", "Eb4"],
+        "drop2": ["A2", "F3", "C4", "Eb4"],
         "spread": ["F2", "C4", "Eb4", "A4"]
       },
-      "Imaj7": {
-        "root":   ["Bb2", "D3", "F3", "A3"],
-        "drop2":  ["D2", "Bb2", "F3", "A3"],
+      "Bbmaj7": {
+        "root": ["Bb2", "D3", "F3", "A3"],
+        "drop2": ["D2", "Bb2", "F3", "A3"],
         "spread": ["Bb1", "F3", "A3", "D4"]
       },
-      "IIImaj7": {
-        "root":   ["D3", "F#3", "A3", "C#4"],
-        "drop2":  ["F#2", "D3", "A3", "C#4"],
+      "Dmaj7": {
+        "root": ["D3", "F#3", "A3", "C#4"],
+        "drop2": ["F#2", "D3", "A3", "C#4"],
         "spread": ["D2", "A3", "C#4", "F#4"]
       },
-      "VI7": {
-        "root":   ["G3", "B3", "D4", "F4"],
-        "drop2":  ["B2", "G3", "D4", "F4"],
+      "G7": {
+        "root": ["G3", "B3", "D4", "F4"],
+        "drop2": ["B2", "G3", "D4", "F4"],
         "spread": ["G2", "D4", "F4", "B4"]
       }
     },
     "transitions": {
-      "IImaj7_to_V7":   { "motion": "C3→C4 (common), E3→Eb4 (chromatic down), G3→F3 (step down), Bb3→A3 (step down)", "parallel_motion_check": "no parallel P5 or P8" },
-      "V7_to_Imaj7":    { "motion": "F3→F3 (common), A3→A3 (common), C4→Bb3 (step down), Eb4→D4 (step down)", "parallel_motion_check": "no parallel P5 or P8" },
-      "IImaj7_to_V7_2": { "motion": "same as IImaj7_to_V7", "parallel_motion_check": "no parallel P5 or P8" },
-      "V7_to_IIImaj7":  { "motion": "F3→F#3 (chromatic up), A3→A3 (common), C4→C#4 (chromatic up), Eb4→D4 (step down)", "parallel_motion_check": "no parallel P5 or P8" },
-      "IIImaj7_to_VI7": { "motion": "D3→D4 (common), F#3→F4 (chromatic down), A3→G3 (step down), C#4→B3 (step down)", "parallel_motion_check": "no parallel P5 or P8" }
+      "Cm7_to_F7": { "motion": "C3->C4 (common), Eb3->Eb4 (chromatic down), G3->F3 (step down), Bb3->A3 (step down)", "parallel_motion_check": "no parallel P5 or P8" },
+      "F7_to_Bbmaj7": { "motion": "F3->F3 (common), A3->A3 (common), C4->Bb3 (step down), Eb4->D4 (step down)", "parallel_motion_check": "no parallel P5 or P8" },
+      "Cm7_to_F7_2": { "motion": "same as Cm7_to_F7", "parallel_motion_check": "no parallel P5 or P8" },
+      "F7_to_Dmaj7": { "motion": "F3->F#3 (chromatic up), A3->A3 (common), C4->C#4 (chromatic up), Eb4->D4 (step down)", "parallel_motion_check": "no parallel P5 or P8" },
+      "Dmaj7_to_G7": { "motion": "D3->D4 (common), F#3->F4 (chromatic down), A3->G3 (step down), C#4->B3 (step down)", "parallel_motion_check": "no parallel P5 or P8" }
     },
     "arc_voicing": {
       "intro": "spread",
@@ -184,44 +209,22 @@
       "resolve": "spread"
     }
   },
-  "melodicPatterns": {
-    "piano": {
-      "intro": "silent",
-      "build": "comping_shells_7ths",
-      "climax": "block_chords_rhythmic",
-      "resolve": "sparse_shell_voicings",
-      "phrases": [
-        { "notes": ["Bb4", "A4", "G4", "F4", "D4"], "rhythm": ["8n", "8n", "8n", "4n", "2n"], "role": "antecedent", "cadence": "half" },
-        { "notes": ["D5", "C5", "Bb4", "A4", "F4", "Bb4"], "rhythm": ["8n", "8n", "8n", "8n", "4n", "2n"], "role": "consequent", "cadence": "authentic" }
-      ]
-    },
-    "bass": {
-      "intro": "whole_notes",
-      "build": "walking_quarter_notes",
-      "climax": "walking_quarter_notes",
-      "resolve": "whole_notes",
-      "walking_example": {
-        "over_IImaj7": ["C2", "D2", "E2", "F2"],
-        "over_V7":     ["F2", "E2", "Eb2", "D2"],
-        "over_Imaj7":  ["Bb1", "C2", "D2", "F2"]
-      }
-    }
-  },
+
   "transitions": {
     "intro_to_build": {
       "type": "riser",
       "bars_before": 0.5,
-      "implementation": "Bass walks up from root to fifth over 2 beats. Piano enters with pickup notes (2 eighth notes before downbeat). Ride increases velocity by 0.1."
+      "strudel": "note('<bb1 c2 d2 f2>').s('triangle').lpf(sine.range(400,800)).room(0.15).gain(perlin.range(0.5,0.7))"
     },
     "build_to_climax": {
       "type": "riser",
       "bars_before": 0.5,
-      "implementation": "Brush pattern intensifies with closed hihat-style hits on all 8th notes. Bass plays ascending chromatic run over last 2 beats. Piano hits accented chord on 'and' of beat 4."
+      "strudel": "stack(s('pink').struct('t*8').lpf(5000).hpf(2000).gain(perlin.range(0.3,0.6)), note('<c2 d2 eb2 e2 f2>').s('triangle').gain(0.7))"
     },
     "climax_to_resolve": {
       "type": "fadeout",
       "bars_before": 1,
-      "implementation": "Piano thins to shell voicings (root + 7th only). Brush drops out at beat 3. Bass returns to whole notes. Ride moves to just beats 1 and 3 with decreasing velocity."
+      "strudel": "chord('Bbmaj7').voicing().s('piano').room(0.35).gain(perlin.range(0.3,0.5)).slow(2)"
     }
   }
 }

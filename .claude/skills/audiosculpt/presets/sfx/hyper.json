@@ -9,66 +9,50 @@
   "sounds": {
     "element-appear": {
       "label": "Aggressive pop/snap",
-      "synth": { "type": "MembraneSynth", "config": { "pitchDecay": 0.005, "octaves": 6, "envelope": { "attack": 0.001, "decay": 0.05, "sustain": 0, "release": 0.03 } } },
-      "effects": [{ "type": "Distortion", "config": { "distortion": 0.4 } }],
-      "note": "C3",
-      "duration": "32n",
+      "strudel": "note('c3').s('sine').fm(6).fmh(6).gain(0.8)",
+      "duration": 60,
       "velocity": 0.8
     },
     "text-typing": {
       "label": "Rapid rhythmic click",
-      "synth": { "type": "MetalSynth", "config": { "frequency": 800, "envelope": { "attack": 0.001, "decay": 0.015, "release": 0.01 }, "harmonicity": 8, "modulationIndex": 20, "resonance": 5000, "octaves": 1 } },
-      "effects": [],
-      "note": null,
-      "duration": "64n",
+      "strudel": "s('metal').hpf(5000).gain(0.4)",
+      "duration": 30,
       "velocity": 0.4
     },
     "number-count": {
       "label": "Arcade coin",
-      "synth": { "type": "FMSynth", "config": { "modulationIndex": 12, "harmonicity": 7, "envelope": { "attack": 0.001, "decay": 0.1, "sustain": 0, "release": 0.08 } } },
-      "effects": [{ "type": "BitCrusher", "config": { "bits": 6 } }],
-      "note": "B6",
-      "duration": "16n",
+      "strudel": "note('b6').s('sine').fm(12).fmh(7).crush(6).gain(0.55)",
+      "duration": 100,
       "velocity": 0.55
     },
     "card-flip": {
       "label": "Aggressive whoosh",
-      "synth": { "type": "NoiseSynth", "config": { "noise": { "type": "white" }, "envelope": { "attack": 0.001, "decay": 0.08, "sustain": 0, "release": 0.04 } } },
-      "effects": [{ "type": "AutoFilter", "config": { "frequency": 12, "baseFrequency": 3000, "octaves": 4 } }, { "type": "Distortion", "config": { "distortion": 0.3 } }],
-      "note": null,
-      "duration": "16n",
+      "strudel": "s('white').lpf(sine.range(3000,12000)).hpf(1000).gain(0.7)",
+      "duration": 100,
       "velocity": 0.7
     },
     "scene-transition": {
       "label": "Impact + reverse",
-      "synth": { "type": "MembraneSynth", "config": { "pitchDecay": 0.08, "octaves": 8, "envelope": { "attack": 0.001, "decay": 0.6, "sustain": 0, "release": 0.5 } } },
-      "effects": [{ "type": "Distortion", "config": { "distortion": 0.5 } }, { "type": "Reverb", "config": { "decay": 3.0, "wet": 0.5 } }],
-      "note": "C1",
-      "duration": "4n",
+      "strudel": "note('c1').s('sine').fm(8).fmh(8).room(0.5).gain(0.9)",
+      "duration": 300,
       "velocity": 0.9
     },
     "cta-final": {
       "label": "Power chord + clap",
-      "synth": { "type": "FMSynth", "config": { "modulationIndex": 8, "harmonicity": 1.5, "envelope": { "attack": 0.001, "decay": 0.5, "sustain": 0.1, "release": 0.8 } } },
-      "effects": [{ "type": "Distortion", "config": { "distortion": 0.6 } }, { "type": "Reverb", "config": { "decay": 2.5, "wet": 0.4 } }],
-      "note": "E3",
-      "duration": "4n",
+      "strudel": "note('e3').s('sawtooth').fm(8).fmh(1.5).room(0.4).gain(0.95)",
+      "duration": 300,
       "velocity": 0.95
     },
     "logo-reveal": {
       "label": "Massive stinger",
-      "synth": { "type": "FMSynth", "config": { "modulationIndex": 14, "harmonicity": 2, "envelope": { "attack": 0.001, "decay": 0.8, "sustain": 0.05, "release": 1.0 } } },
-      "effects": [{ "type": "Distortion", "config": { "distortion": 0.45 } }, { "type": "Reverb", "config": { "decay": 4.0, "wet": 0.5 } }],
-      "note": "C3",
-      "duration": "2n",
+      "strudel": "note('c3').s('sawtooth').fm(14).fmh(2).room(0.5).gain(1.0).slow(2)",
+      "duration": 500,
       "velocity": 1.0
     },
     "stat-progress": {
       "label": "Rapid bell chain",
-      "synth": { "type": "MetalSynth", "config": { "frequency": 600, "envelope": { "attack": 0.001, "decay": 0.06, "release": 0.04 }, "harmonicity": 10, "modulationIndex": 24, "resonance": 6000, "octaves": 2 } },
-      "effects": [],
-      "note": null,
-      "duration": "32n",
+      "strudel": "s('metal').hpf(6000).gain(0.5)",
+      "duration": 60,
       "velocity": 0.5
     }
   }

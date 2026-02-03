@@ -1,6 +1,6 @@
 # audiosculpt
 
-Programmatic audio generation (soundtrack + SFX) for video-craft webvideos or standalone use. Two engines: **Text2midi** (AI-generated MIDI → Tone.js rendering) or **Tone.js synthesis** (fallback). Output is always a self-contained `<script>` block.
+Programmatic audio generation (soundtrack + SFX) for video-craft webvideos or standalone use. Uses **Strudel** (TidalCycles for JavaScript) for pattern-based live-coding audio synthesis. Output is always a self-contained `<script>` block.
 
 ## Commands
 
@@ -10,7 +10,237 @@ Programmatic audio generation (soundtrack + SFX) for video-craft webvideos or st
 | `/audiosculpt add-to-video <html>` | Inject audio into an existing video-craft webvideo |
 | `/audiosculpt preview <style>` | Generate a standalone HTML page with 15s demo of a style |
 | `/audiosculpt styles` | List all 20 available soundtrack styles with descriptions |
-| `/audiosculpt setup` | Install Text2midi engine (optional, requires Python + GPU) |
+| `/audiosculpt create --template <id>` | Use a parametric template for quick generation |
+| `/audiosculpt create --narration` | Enable TTS narration (video-craft integration) |
+| `/audiosculpt add-narration <html>` | Add narration to existing HTML |
+
+---
+
+## Using Templates (Recommended for Video Promo)
+
+Instead of choosing a musical style, select a **template** that matches your use case. Templates auto-configure arc strategy, impact intensity, and voiceover compatibility based on duration.
+
+### Available Templates
+
+| Template ID | Use Cases | Base Style | Durations |
+|-------------|-----------|------------|-----------|
+| `tech_promo` | SaaS, startup, app, AI demo | electronic | 15s/30s/60s |
+| `epic_trailer` | Film, game, product launch | cinematic | 15s/30s/60s |
+| `chill_lifestyle` | Wellness, travel, coffee, fashion | lo-fi | 30s/60s |
+| `corporate_safe` | B2B, enterprise, fintech | corporate | 30s/60s |
+| `hype_social` | Gaming, sports, energy, retail | trap | 15s/30s |
+| `luxury_minimal` | Beauty, fashion, premium auto | neo-classical | 30s/60s |
+
+### Template Parameters
+
+Each template accepts:
+- **duration** — 15s, 30s, or 60s (varies by template)
+- **energy** — 0.3 to 1.0 (affects velocity, density, filter brightness)
+- **voiceover** — true/false (enables voiceover mode automatically)
+
+### Usage Examples
+
+```bash
+# Tech startup 30-second promo
+/audiosculpt create --template tech_promo --duration 30s
+
+# Epic game trailer with high energy
+/audiosculpt create --template epic_trailer --duration 15s --energy 1.0
+
+# Lifestyle video with voiceover support
+/audiosculpt create --template chill_lifestyle --duration 60s --voiceover
+```
+
+Templates are stored in `.claude/skills/audiosculpt/presets/templates/`.
+
+---
+
+## Voiceover Mode
+
+When generating audio for videos with narration, enable **voiceover mode** to create a music bed that doesn't compete with speech.
+
+### Frequency Architecture
+
+```
+┌─────────────────────────────────────────┐
+│  SUB BED (20-200Hz)                     │
+│  - Sub bass, kick low frequencies       │
+│  - Gain: 0.8                            │
+├─────────────────────────────────────────┤
+│  ████████ VOICEOVER ZONE ████████       │
+│  ████████ (200Hz - 4kHz) ████████       │
+│  ████████ MUSIC MINIMAL  ████████       │
+├─────────────────────────────────────────┤
+│  AIR BED (4kHz-12kHz)                   │
+│  - Hi-hats, shimmers, high pads         │
+│  - Gain: 0.6                            │
+├─────────────────────────────────────────┤
+│  MID PUNCTUATION (sparse)               │
+│  - Melody accents only (not sustained)  │
+│  - Gain: 0.25                           │
+│  - Max 2 events per bar                 │
+└─────────────────────────────────────────┘
+```
+
+### When Voiceover Mode Activates
+
+- Template parameter `voiceover: true`
+- User explicitly requests voiceover support
+- TTS narration is enabled
+
+### Preset Schema
+
+```json
+"voiceover_mode": {
+  "enabled": false,
+  "layers": {
+    "sub_bed": {
+      "frequency_focus": "below_200hz",
+      "instruments": ["sub_bass", "kick_sub"],
+      "gain": 0.8,
+      "filter": { "lpf": 200 }
+    },
+    "air_bed": {
+      "frequency_focus": "above_4000hz",
+      "instruments": ["hihat", "shimmers", "pad_high"],
+      "gain": 0.6,
+      "filter": { "hpf": 4000 }
+    },
+    "mid_punctuation": {
+      "frequency_focus": "200hz_4000hz",
+      "instruments": ["melody_stabs", "chord_hits"],
+      "gain": 0.25,
+      "sparse": true,
+      "max_events_per_bar": 2
+    }
+  }
+}
+```
+
+### Strudel Implementation
+
+```javascript
+// Normal mode
+const normalPattern = `stack(
+  ${bassPattern},
+  ${padPattern},
+  ${melodyPattern},
+  ${drumsPattern}
+)`;
+
+// Voiceover mode - frequency-split layers
+const voiceoverPattern = `stack(
+  // Sub bed (below 200Hz)
+  ${bassPattern}.lpf(200).gain(0.8),
+  s('RolandTR808_bd').struct('t ~ ~ ~ t ~ ~ ~').lpf(100).gain(0.7),
+
+  // Air bed (above 4kHz)
+  s('RolandTR808_hh').struct('~ t ~ t ~ t ~ t').hpf(4000).gain(0.5),
+  ${padPattern}.hpf(4000).gain(0.4),
+
+  // Mid punctuation (sparse, quiet)
+  ${melodyPattern}.struct('t ~ ~ ~ ~ ~ ~ ~').lpf(4000).hpf(200).gain(0.25)
+)`;
+```
+
+---
+
+## TTS Narration System
+
+Generate voice narration synchronized with video animations using Edge-TTS (Microsoft Azure Neural voices).
+
+### Requirements
+
+```bash
+pip install edge-tts
+```
+
+### Entry Points
+
+**A. Video-Craft Integration** (`/audiosculpt create --narration`)
+- YAML from video-craft contains structured text elements
+- Narration brief generated automatically
+- Voiceover mode enabled automatically
+
+**B. Standalone** (`/audiosculpt add-narration <html>`)
+- Parse existing HTML for `.el` text content
+- Extract timing from CSS animation-delay
+- Generate narration brief
+
+### Recommended Voices
+
+| Voice | Character | Use Cases |
+|-------|-----------|-----------|
+| `en-US-AriaNeural` | Professional, warm | Corporate, tech, explainer |
+| `en-US-GuyNeural` | Energetic, confident | Sports, gaming, hype |
+| `en-US-JennyNeural` | Friendly, casual | Lifestyle, wellness |
+| `en-US-DavisNeural` | Deep, authoritative | Trailer, documentary |
+| `en-GB-SoniaNeural` | Elegant, sophisticated | Luxury, fashion |
+
+### Emphasis by Element Type
+
+| Element | Rate | Pitch | Effect |
+|---------|------|-------|--------|
+| heading | -15% | +5Hz | Slower, prominent |
+| text | +0% | +0Hz | Normal |
+| button/CTA | -10% | +8Hz | Emphasized |
+
+### Narration Brief Schema
+
+```json
+{
+  "narration": {
+    "enabled": true,
+    "voice": "en-US-AriaNeural",
+    "style": "enthusiastic",
+    "scenes": [
+      {
+        "scene_index": 0,
+        "elements": [
+          {
+            "id": "narr-s0-e0",
+            "display_text": "THE FUTURE IS HERE",
+            "narration_text": "The future is here!!",
+            "element_type": "heading",
+            "timing": { "appear_ms": 300 }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Text Transformations
+
+| Original | Narration |
+|----------|-----------|
+| `50%` | "fifty percent" |
+| `AI` | "A.I." |
+| Headlines | Add `!!` suffix |
+| CTA | Add `!!` suffix |
+
+### Ducking
+
+When narration plays, music volume ducks automatically:
+- Normal: 0.5 gain
+- During speech: 0.15 gain
+- Attack: 50ms before speech
+- Release: 200ms after speech
+
+### Usage
+
+```bash
+# Generate narration from brief
+python narration_generator.py narration_brief.json ./audio/narration/
+
+# List available voices
+python narration_generator.py --list-voices
+```
+
+### Fallback
+
+If Edge-TTS unavailable, browser `speechSynthesis` API can be used (lower quality).
 
 ---
 
@@ -22,24 +252,21 @@ Video HTML ──→ TIR (Timeline) + Feature Vector
                 Style selection (algorithmic)
                           ↓
               ┌──────────────────────────┐
-              │  Text2midi installed?     │
-              │  YES → generate MIDI      │
-              │      → parse to events    │
-              │      → render via Tone.js │
-              │  NO  → Tone.js synthesis  │
-              │      using preset patterns│
+              │  Load preset patterns     │
+              │  Build Strudel code       │
+              │  - Soundtrack patterns    │
+              │  - SFX layer from TIR     │
+              │  - Phase transitions      │
               └──────────────────────────┘
-                          ↓
-              SFX layer (always Tone.js, from TIR)
                           ↓
               Inject <script> into HTML
 ```
 
 Two audio layers, always separate:
 - **Soundtrack** — Continuous music following an emotional arc
-- **SFX** — Punctual sounds synced to visual events (always Tone.js, never ML)
+- **SFX** — Punctual sounds synced to visual events
 
-The Tone.js library is loaded via CDN: `https://unpkg.com/tone`
+The Strudel library is loaded via CDN: `https://unpkg.com/@strudel/web@1.0.3`
 
 ---
 
@@ -100,41 +327,88 @@ Ask:
 
 ### Arc Duration Rule
 
-The emotional arc (intro → build → climax → resolve) only makes sense for longer content. For short videos the soundtrack must hit full intensity from bar 1:
-
 | Duration | Arc strategy |
 |----------|-------------|
-| ≤ 30s | **No arc.** Full intensity from bar 0. Use the climax grid for all bars. Last 2 bars use a sparse outro grid for ending feel. |
+| ≤ 30s | **No arc.** Full intensity from bar 0. Use the climax patterns for all bars. Last 2 bars use resolve patterns. |
 | 30s–60s | **Compressed arc.** 1 bar intro, 2 bars build, rest climax, last 2 bars resolve. |
 | > 60s | **Full arc.** Use preset `arc` section as-is. |
+
+### Impact Frame (0-3 seconds)
+
+For social media promo videos, the audio must **hit immediately** — no gradual fade-ins. The Impact Frame is a 0-3 second phase that plays BEFORE the intro.
+
+**When to enable:**
+- Video is ≤ 30s (social promo)
+- User explicitly requests "hook" or "immediate energy"
+- Template has `impact_intensity > 0`
+
+**Impact Frame structure:**
+
+| Timing | Role | Elements |
+|--------|------|----------|
+| 0ms | `attention_grabber` | Sub hit + noise burst (full velocity) |
+| 100ms | `genre_signifier` | Signature sound of the style |
+| 500ms | `hook_motif` | Melodic cell or rhythmic hook |
+
+**Impact Frame by family:**
+
+| Family | Attention Grabber | Genre Signifier | Hook Motif |
+|--------|-------------------|-----------------|------------|
+| tonal | Piano chord stab | Orchestral swell | Melodic 4-note cell |
+| modal | Pad swell | Reverb shimmer | Drone + single note |
+| loop | 808 kick + sub | Synth riser | Arp pattern |
+| experimental | Noise burst | Glitch texture | Rhythmic stutter |
+
+**Preset schema:**
+
+```json
+"impact_frame": {
+  "enabled": true,
+  "duration_ms": 3000,
+  "layers": {
+    "0ms": { "role": "attention_grabber", "elements": ["sub_hit", "kick"], "velocity": 1.0 },
+    "100ms": { "role": "genre_signifier", "elements": ["signature_sound"], "velocity": 0.9 },
+    "500ms": { "role": "hook_motif", "elements": ["melodic_cell"], "velocity": 0.85 }
+  }
+}
+```
+
+**Strudel implementation:**
+
+```javascript
+// Impact phase pattern (0-3s)
+const impactPattern = `stack(
+  s('RolandTR808_bd').struct('t').gain(1.0).room(0.3),
+  s('white').struct('t').lpf(8000).gain(0.7).decay(0.5),
+  note('${hookMotif}').s('${leadSound}').delay(0.5).gain(0.85)
+)`;
+
+// Timeline with impact
+const phases = {
+  impact: impactPattern,  // 0-3s
+  intro: introPattern,    // 3s-...
+  build: buildPattern,
+  climax: climaxPattern,
+  resolve: resolvePattern
+};
+```
 
 ### Step 4: Generation Plan
 
 Show the user:
 - **TIR** (abbreviated) — list of events with timestamps, so user can verify sync
 - Style chosen + instruments + **why** (feature vector → arousal/valence → style)
-- Emotional arc (intro → build → climax → resolve) with timestamp boundaries, or "full intensity / no arc" for ≤30s
+- Emotional arc (intro → build → climax → resolve) with timestamp boundaries
 - SFX mapping (which visual events get which sounds)
 - BPM and key
-- Engine: Text2midi or Tone.js fallback
 
 Ask: "Ready to generate? Or adjust anything?"
 
 ### Step 5: Output
 
-**If Text2midi is available:**
-1. Build prompt from `text2midi_prompt` in coherence-matrix + video features
-2. Run: `python engine/generate.py --prompt "..." --output /tmp/soundtrack.mid`
-3. Run: `python engine/midi2events.py /tmp/soundtrack.mid`
-4. Read the events JSON → generate Tone.js code that schedules each note event
-5. Map MIDI tracks to instruments from the preset (track 0 → piano, track 1 → bass, etc.)
-6. Add SFX layer from TIR
-7. Apply ducking
-
-**If Text2midi is NOT available (fallback):**
 1. Read the preset from `.claude/skills/audiosculpt/presets/soundtrack/<style>.json`
-2. Use `rhythmGrid` for drum patterns, `melodicPatterns` for arp/lead/bass, `voiceLeading` for chords
-3. Generate Tone.js code following the preset patterns for each arc phase
+2. Use `patterns` section for each arc phase (intro/build/climax/resolve)
+3. Use `transitions` section for phase boundaries
 4. Add SFX layer from TIR
 5. Apply ducking
 
@@ -143,51 +417,6 @@ Ask: "Ready to generate? Or adjust anything?"
 - If **from-video**: inject `<script>` block before `</body>`
 - If **standalone**: generate complete HTML page with play button
 - **Always generate an Audio Report** (see "Audio Report" section below)
-
----
-
-## `/audiosculpt add-to-video <html>`
-
-Shortcut for from-video flow:
-1. Read the HTML file
-2. Build TIR
-3. Extract feature vector → select style algorithmically
-4. Generate and inject audio code
-5. Save the file
-
-Always ask confirmation before saving.
-
----
-
-## `/audiosculpt preview <style>`
-
-Generate a standalone HTML page with:
-- 15 seconds of the requested style
-- Play/Stop button
-- Style name and description displayed
-- Simple waveform visualizer using `Tone.FFT`
-
-The page should be self-contained (inline CSS, Tone.js from CDN).
-
----
-
-## `/audiosculpt styles`
-
-Read `coherence-matrix.json` and display a formatted table of all 20 styles with: name, typical contexts, BPM range, energy level, default SFX family, arousal/valence profile.
-
----
-
-## `/audiosculpt setup`
-
-Install the Text2midi engine for AI-generated MIDI:
-
-```bash
-cd .claude/skills/audiosculpt && bash engine/setup.sh
-```
-
-This installs PyTorch, Transformers, miditok, and downloads the Text2midi model (~500MB) from HuggingFace. Requires Python 3.10+ and a GPU (CUDA or MPS) for practical speed.
-
-If setup fails or no GPU is available, the skill works fine with Tone.js synthesis only.
 
 ---
 
@@ -216,26 +445,11 @@ Output: TIR — sorted array of timed events
 4. FOR each scene div (id="s0", "s1", ... or "scene-0", "scene-1", ...):
    FOR each .el element inside:
      a. PARSE style="animation: <name> <duration> <easing> <delay> <fill>"
-        The DELAY value is the absolute timestamp from document start
-        (video-craft uses absolute delays, not scene-relative)
-     b. VERIFY: delay should fall within [scene.startMs, scene.startMs + scene.durationMs]
-     c. CLASSIFY element type from CSS classes:
-        - contains "heading" or is large text → "element-appear"
-        - contains "text" or is body text → "text-typing"
-        - contains "card" → "card-flip"
-        - contains "button" → "cta-final" (if last scene) or "element-appear"
-        - contains "image" or "img" → "element-appear"
-        - contains "number" or "counter" or "stat" with numeric content → "number-count"
-        - contains "logo" → "logo-reveal"
-        - contains "progress" or "bar" with width animation → "stat-progress"
-     d. CLASSIFY animation energy:
-        - fade-in, soft-reveal → 0.4 (low)
-        - slide-up, slide-down, slide-left, slide-right, grow → 0.5 (low-medium)
-        - bounce-in, elastic-in, flip-in, card-cascade → 0.7 (medium)
-        - zoom-in, slam-in, glitch-in, pop-in, spin-in, skew-in → 0.85 (high)
-     e. ADD event to TIR
+     b. CLASSIFY element type from CSS classes
+     c. CLASSIFY animation energy (0.4-0.85)
+     d. ADD event to TIR
 
-5. ADD scene-transition events at each scene boundary (scene.startMs for scenes 1+)
+5. ADD scene-transition events at each scene boundary
 
 6. SORT TIR by timeMs ascending
 
@@ -252,141 +466,96 @@ Output: TIR — sorted array of timed events
 [
   {"timeMs": 300,   "type": "element-appear",    "energy": 0.85, "scene": 0, "anim": "glitch-in",  "phase": "intro"},
   {"timeMs": 1200,  "type": "text-typing",       "energy": 0.4,  "scene": 0, "anim": "fade-in",    "phase": "intro"},
-  {"timeMs": 2500,  "type": "scene-transition",   "energy": 1.0,  "scene": 1, "anim": "glitch",     "phase": "intro"},
-  {"timeMs": 2800,  "type": "element-appear",     "energy": 0.85, "scene": 1, "anim": "slam-in",    "phase": "build"},
-  ...
+  {"timeMs": 2500,  "type": "scene-transition",   "energy": 1.0,  "scene": 1, "anim": "glitch",     "phase": "intro"}
 ]
 ```
-
-**Show the TIR to the user** in Step 4 (Generation Plan) for verification.
 
 ---
 
 ## Audio Generation: Soundtrack
 
-### Using Text2midi (primary engine)
+### Strudel Pattern System
 
-When Text2midi is installed, the skill generates a MIDI file and renders it via Tone.js.
+Strudel uses a pattern-based approach with mini-notation. Each preset contains patterns for each arc phase in the `patterns` object.
 
-1. **Build prompt** using the `text2midi_prompt` from coherence-matrix:
-   ```
-   Template: "An energetic electronic instrumental track with {instruments}.
-              Set in {key} with a {time_sig} time signature at {bpm} BPM.
-              {energy_descriptor}. Duration: {duration} seconds. No vocals."
+### Reading Preset Patterns
 
-   Filled: "An energetic electronic instrumental track with synthesizer lead,
-            arpeggiator, synth bass, pad, electronic drums. Set in A minor
-            with a 4/4 time signature at 122 BPM. Aggressive and intense
-            with heavy bass and fast arpeggios. Duration: 23 seconds. No vocals."
-   ```
-
-2. **Generate:** `python engine/generate.py --prompt "..." --output /tmp/soundtrack.mid`
-
-3. **Parse:** `python engine/midi2events.py /tmp/soundtrack.mid`
-   Output: JSON array of note events with time, track, note, duration, velocity
-
-4. **Map tracks to instruments** from the preset:
-   - Track 0 → first instrument in preset (typically piano or lead)
-   - Track 1 → second instrument (typically bass)
-   - Track 2+ → remaining instruments
-   - Drum tracks (channel 10 in GM) → kick/snare/hihat from preset
-
-5. **Generate Tone.js code** that creates instruments from preset configs and schedules each MIDI event
-
-### Using Tone.js Synthesis (fallback)
-
-When Text2midi is not available, use the preset patterns directly.
-
-#### Reading Rhythm Grids
-
-Each preset has a `rhythmGrid` field with step patterns per arc phase. The number of steps per bar depends on the time signature: `stepsPerBar = N * (16 / D)` (e.g. 4/4 → 16, 3/4 → 12, 6/8 → 12). Each step represents the smallest subdivision. Value = velocity (0 = silence). See "Time Signature Rules" section for full details.
+Each preset has a `patterns` field with Strudel code strings per arc phase:
 
 ```json
-"rhythmGrid": {
-  "build": {
-    "kick":   [0.8,0,0,0, 0.8,0,0,0, 0.8,0,0,0, 0.8,0,0,0],
-    "snare":  [0,0,0,0, 0.7,0,0,0, 0,0,0,0, 0.7,0,0,0],
-    "hihat":  [0.5,0,0.3,0, 0.5,0,0.3,0, 0.5,0,0.3,0, 0.5,0,0.3,0]
-  }
+"patterns": {
+  "intro": {
+    "rhythm": "stack(s('jazz_ride').struct('t(7,16)').gain(sine.range(0.4,0.7)), s('pink').struct('~ ~ t ~ ~ ~ t ~').lpf(5000).hpf(2000).gain(0.3))",
+    "harmony": "silent",
+    "bass": "note('<bb1 c2 d2 f2>').s('triangle').lpf(800).room(0.15).gain(0.65).slow(4)"
+  },
+  "build": { ... },
+  "climax": { ... },
+  "resolve": { ... }
 }
 ```
 
-**How to use:** Read `stepsPerBar` from the time signature (see "Time Signature Rules"). For each bar in the current arc phase, loop through `stepsPerBar` steps. If velocity > 0, schedule a hit at `barStartTime + step * subdivision` with that velocity.
-
-Repeat the pattern for each bar in the phase. To avoid monotony:
-- Vary velocity ±10% randomly
-- On the last bar before a phase change, use the `transitions` pattern instead
-
-#### Timing Rules (MANDATORY)
-
-**ALL note scheduling MUST follow these rules. No exceptions.**
-
-1. **Quantized grid only.** Every note MUST land exactly on a grid position: `barStartTime + step * subdivision` where `subdivision = 60 / BPM / (16 / D)` and D is the time signature denominator. No fractional steps, no offsets, no jitter.
-2. **NEVER randomize timing.** Do NOT apply Math.random(), humanize(), or any variance to note start times. Humanization applies ONLY to velocity values.
-3. **NEVER use `setTimeout` or `setInterval`** for note scheduling. Use only `Tone.Transport.schedule()` or `Tone.Part`.
-4. **One grid size per bar.** The grid has `stepsPerBar` steps (determined by time signature). Do not mix grids of different sizes. If a pattern needs coarser values (e.g. 8th notes in 4/4), place hits on even steps only (0,2,4,6...).
-5. **No random note placement.** Do not use `Math.random()` to decide WHEN a note plays. Random values are allowed ONLY for velocity variation (±10%) and for selecting WHICH voicing variant to use.
-6. **Preset is law.** Use the `rhythmGrid` arrays exactly as defined in the preset JSON. Do not invent new patterns. If a phase has no grid for an instrument, that instrument is silent in that phase.
+**How to use:** For each arc phase, read the pattern strings and combine them with `stack()`:
 
 ```javascript
-// CORRECT — grid-locked timing, velocity-only humanization
-const [N, D] = preset.temporal.timeSignature;
-const stepsPerBar = N * (16 / D);
-const subdivision = 60 / BPM / (16 / D);
-
-grid.forEach((vel, step) => {
-  if (vel > 0) {
-    const time = barStart + step * subdivision; // EXACT grid position
-    const hVel = vel * (0.9 + Math.random() * 0.2); // ±10% velocity only
-    Tone.Transport.schedule(t => instr.triggerAttackRelease(note, dur, t, hVel), time);
-  }
-});
-
-// WRONG — timing humanization causes rhythmic chaos
-const time = barStart + step * subdivision + (Math.random() - 0.5) * 0.02; // ❌ FORBIDDEN
-const time = humanize(barStart + step * subdivision, 10); // ❌ FORBIDDEN
+const introPattern = `stack(
+  ${preset.patterns.intro.rhythm},
+  ${preset.patterns.intro.harmony !== 'silent' ? preset.patterns.intro.harmony : ''},
+  ${preset.patterns.intro.bass !== 'silent' ? preset.patterns.intro.bass : ''}
+)`;
 ```
 
-#### Reading Voice Leading Tables
+### Strudel Mini-Notation Reference
 
-Each preset has a `voiceLeading` field with concrete note arrays for each chord.
+| Syntax | Meaning | Example |
+|--------|---------|---------|
+| `t` | Trigger/hit | `s('bd').struct('t ~ ~ ~')` |
+| `~` | Rest/silence | `~ ~ t ~` = hits on beat 3 |
+| `<>` | Sequence alternation | `<c4 e4 g4>` = cycle through |
+| `[]` | Grouping | `[c4 e4]` = subdivide |
+| `*n` | Speed up n times | `t*4` = 4 hits |
+| `/n` | Slow down n times | `t/2` = half speed |
+| `(k,n)` | Euclidean rhythm | `(3,8)` = 3 hits over 8 steps |
 
-```json
-"voiceLeading": {
-  "Am": {
-    "root":   ["A2", "E3", "A3", "C4", "E4"],
-    "drop2":  ["A2", "C3", "A3", "E4"],
-    "spread": ["A2", "E3", "C4", "A4"]
-  }
-}
-```
+### Strudel Functions Reference
 
-**How to use:**
-- `intro` phase → use `spread` voicing (open, atmospheric)
-- `build` phase → use `drop2` voicing (balanced, moves well)
-- `climax` phase → use `root` voicing (full, maximum density)
-- `resolve` phase → use `spread`, then thin progressively (remove inner notes)
+| Function | Purpose | Example |
+|----------|---------|---------|
+| `s('name')` | Sound/sample | `s('bd')`, `s('RolandTR808_hh')` |
+| `note('x')` | Note pitch | `note('c4')`, `note('<c4 e4 g4>')` |
+| `chord('X')` | Chord | `chord('Am7')`, `chord('<Am C F G>')` |
+| `.voicing()` | Auto voice | `chord('Am7').voicing()` |
+| `.struct('pat')` | Rhythm structure | `.struct('t ~ t ~')` |
+| `.gain(n)` | Volume 0-1 | `.gain(0.7)` |
+| `.room(n)` | Reverb 0-1 | `.room(0.4)` |
+| `.lpf(hz)` | Low-pass filter | `.lpf(800)` |
+| `.hpf(hz)` | High-pass filter | `.hpf(2000)` |
+| `.delay(n)` | Delay amount | `.delay(0.3)` |
+| `.fm(n)` | FM modulation index | `.fm(1.5)` |
+| `.fmh(n)` | FM harmonicity | `.fmh(0.25)` |
+| `.slow(n)` | Stretch pattern | `.slow(4)` |
+| `.fast(n)` | Speed up pattern | `.fast(2)` |
+| `stack(a,b,c)` | Layer patterns | `stack(drums, bass, pad)` |
+| `sine.range(a,b)` | LFO oscillation | `gain(sine.range(0.4,0.7))` |
+| `perlin.range(a,b)` | Noise modulation | `gain(perlin.range(0.3,0.6))` |
 
-The `transitions` field specifies which voicing to use for each chord change and describes the voice motion (common tones, stepwise motion).
+### Available Sound Sources
 
-#### Reading Melodic Patterns
+**Oscillators:** `sine`, `sawtooth`, `square`, `triangle`
 
-Each preset has a `melodicPatterns` field defining arp, lead, and bass behavior per phase.
+**Noise:** `white`, `pink`, `brown`
 
-**Arp pattern types:**
-- `ascending` — play chord notes low→high, loop: 1-2-3-4-1-2-3-4
-- `ascending_skip` — ascending but skip one note each cycle: 1-3-2-4-1-3-2-4
-- `pendulum` — up and down: 1-2-3-4-3-2-1-2
-- `descending` — play chord notes high→low, loop
+**Samples:** `piano`, `pluck`, `metal`, `timpani`
 
-**Bass pattern types:**
-- `whole_notes` — one note per bar (root of chord)
-- `root_fifth` — root on beats 1,3 + fifth on beats 2,4
-- `syncopated` — rhythmic pattern specified in `rhythm` field
+**Drum Banks:**
+- `RolandTR808` — `bd`, `sd`, `hh`, `cp`, `oh`
+- `RolandTR909` — `bd`, `sd`, `hh`, `cp`
+- `RolandTR606` — `bd`, `sd`, `hh`
+- Usage: `s('RolandTR808_bd')`, `s('RolandTR909_hh')`
 
-**Lead:** Usually `climax_only: true`. The `phrases` array contains concrete note sequences with rhythms. Transpose these to fit the current chord.
+**Jazz Drums:** `jazz_ride`, `brush`, `tabla`
 
-#### Transition Patterns
+### Transition Patterns
 
 Each preset has a `transitions` field for section boundaries:
 
@@ -394,130 +563,107 @@ Each preset has a `transitions` field for section boundaries:
 "transitions": {
   "intro_to_build": {
     "type": "riser",
-    "implementation": "Filter sweep 200Hz→4000Hz on pad over 1 bar + snare roll last 2 beats"
+    "bars_before": 0.5,
+    "strudel": "note('<bb1 c2 d2 f2>').s('triangle').lpf(sine.range(400,800)).room(0.15).gain(perlin.range(0.5,0.7))"
   },
-  "build_to_climax": {
-    "type": "drop",
-    "implementation": "Full stop (200ms silence) → kick hit with all layers entering simultaneously"
-  },
-  "climax_to_resolve": {
-    "type": "fadeout",
-    "implementation": "Remove kick first, then snare, then bass. Only pad+arp remain."
-  }
+  "build_to_climax": { ... },
+  "climax_to_resolve": { ... }
 }
 ```
 
-Generate the transition code exactly as described in `implementation`.
+Generate the transition by playing the `strudel` pattern for `bars_before` bars at the phase boundary.
 
 ---
 
 ## Audio Generation: SFX
 
-SFX are always generated with Tone.js, synced to the TIR events.
+SFX are generated as Strudel patterns synced to TIR events.
 
 ### SFX Timing Rules
 
-- Sync within 50ms of visual event (cross-modal binding window is 100ms)
-- Apply ducking: reduce soundtrack volume by 6-12dB during SFX, with 50ms attack and 200ms release
+- Sync within 50ms of visual event
+- Apply ducking during SFX
 - SFX duration: 100-500ms depending on event type
 
-### Psychoacoustic Principles
+### SFX Pattern Generation
 
-1. **Cross-modal binding**: SFX must match visual characteristics (high pitch → small/angular elements, low pitch → large/round elements)
-2. **Entrainment**: Keep beat isochronous with micro-variations (swing, velocity changes) to prevent habituation
-3. **Silence as tool**: 200ms silence after crescendo increases memorization; 500ms before climax maximizes impact
-4. **Transients for attention**: Use sharp attacks at narrative turning points (scene transitions, reveals, CTA)
-5. **Reward sounds**: Confirmation SFX use instant attack, harmonic body, exponential decay, 1-4kHz fundamental
-
-### SFX Code Pattern
-
-For each event in the TIR, read the matching sound from the SFX family preset and schedule it:
+For each TIR event, schedule a one-shot Strudel pattern:
 
 ```javascript
-// For each TIR event:
-Tone.Transport.schedule((time) => {
-  sfxSynth.triggerAttackRelease(sfxPreset.note, sfxPreset.duration, time,
-    sfxPreset.velocity * event.energy);  // scale velocity by animation energy
-  duck(time, 0.15);  // duck soundtrack during SFX
-}, event.timeMs / 1000);
+// Schedule SFX at specific time
+const sfxPatterns = tirEvents.map(e => {
+  const sfxSound = getSFXForEvent(e.type, sfxPreset);
+  return `s('${sfxSound.source}').struct('t').gain(${e.energy * sfxSound.gain})`;
+});
 ```
 
 ---
 
-## Ducking
-
-When SFX play, automatically reduce soundtrack volume to prevent masking:
-
-```javascript
-const duckGain = new Tone.Gain(1).toDestination();
-soundtrack.connect(duckGain);
-
-function duck(time, durationSec = 0.3) {
-  duckGain.gain.setValueAtTime(1, time);
-  duckGain.gain.linearRampToValueAtTime(0.15, time + 0.03);  // -16dB in 30ms
-  duckGain.gain.linearRampToValueAtTime(1, time + durationSec + 0.3);  // recover in 300ms
-}
-```
-
-Apply ducking to:
-- All SFX in **cinematic**, **hyper**, **dark** families (prominent SFX — full ducking)
-- **digital** family (moderate ducking — use gain 0.25 instead of 0.15)
-- **organic** family (moderate ducking — use gain 0.25 instead of 0.15)
-- Scene transitions (always, full ducking)
-- CTA final (always, full ducking)
-- Skip ducking for **clean** family at low velocity (too subtle to need it)
-
----
-
-## Tone.js Code Structure
+## Strudel Code Structure
 
 Always structure generated code as:
 
-```javascript
-// 1. Wait for user gesture (autoplay policy)
+```html
+<script src="https://unpkg.com/@strudel/web@1.0.3"></script>
+<script>
 document.addEventListener('click', async () => {
-  await Tone.start();
+  const { initStrudel, repl } = await import('https://unpkg.com/@strudel/web@1.0.3');
+  await initStrudel();
 
-  // 2. Master chain (from preset master.effects)
-  const compressor = new Tone.Compressor({...});
-  const limiter = new Tone.Limiter({...});
-  Tone.getDestination().chain(compressor, limiter);
+  // Set tempo
+  setcpm(BPM / 4);  // cycles per minute = BPM / 4 for 4/4
 
-  // 3. Ducking bus
-  const duckGain = new Tone.Gain(1).toDestination();
-  function duck(time, dur) { /* see Ducking section */ }
+  // Phase patterns from preset
+  const phases = {
+    intro: `stack(
+      ${preset.patterns.intro.rhythm},
+      ${preset.patterns.intro.harmony},
+      ${preset.patterns.intro.bass}
+    )`,
+    build: `stack(...)`,
+    climax: `stack(...)`,
+    resolve: `stack(...)`
+  };
 
-  // 4. Instruments + effects (from preset, connected to duckGain)
-  const piano = new Tone.PolySynth(Tone.Synth, {/* from preset */});
-  const pianoReverb = new Tone.Reverb({/* from preset */});
-  piano.chain(pianoReverb, duckGain);
+  // Timeline: schedule phase changes
+  const timeline = [
+    { time: 0, phase: 'intro' },
+    { time: introEnd, phase: 'build' },
+    { time: buildEnd, phase: 'climax' },
+    { time: climaxEnd, phase: 'resolve' }
+  ];
 
-  // 5. Soundtrack: schedule note events
-  // If from Text2midi: each MIDI event becomes a triggerAttackRelease
-  // If from preset patterns: build from rhythmGrid + voiceLeading + melodicPatterns
-  const part = new Tone.Part((time, note) => {
-    piano.triggerAttackRelease(note.name, note.duration, time, note.velocity);
-  }, [/* note events array */]);
+  // Start with intro
+  let currentPattern = phases.intro;
+  await repl({ code: currentPattern }).start();
 
-  // 6. SFX: schedule from TIR
-  Tone.Transport.schedule((time) => {
-    sfx.triggerAttackRelease("C5", "8n", time, 0.6);
-    duck(time, 0.15);
-  }, eventTimeSec);
+  // Schedule phase transitions
+  timeline.forEach((point, i) => {
+    if (i > 0) {
+      setTimeout(() => {
+        hush();  // Stop current pattern
+        repl({ code: phases[point.phase] }).start();
+      }, point.time * 1000);
+    }
+  });
 
-  // 7. Start
-  Tone.Transport.bpm.value = /* from preset */;
-  Tone.Transport.start();
+  // Schedule SFX from TIR
+  tirEvents.forEach(event => {
+    setTimeout(() => {
+      repl({ code: getSFXPattern(event) }).play();
+    }, event.timeMs);
+  });
+
 }, { once: true });
+</script>
 ```
 
 ### Key Constraints
 
-- **Samples available** — use `Tone.Sampler` for all 31 sampled instruments (see `sample-map.json`), FMSynth fallback for offline. 45 FM patches in `synth-patches.json` (26 with `sampleSource` link, 19 synthesis-only)
+- **Strudel CDN**: `https://unpkg.com/@strudel/web@1.0.3` (pinned version)
 - **No voice/vocals** — instrumental only
-- **Tone.js CDN**: `https://unpkg.com/tone`
 - **Browser autoplay**: Always wrap in user gesture handler
-- **Duration**: Use Temporal Quantization algorithm (see section below) when from-video
+- **Tempo**: Use `setcpm(BPM / 4)` for cycles per minute (4 beats per cycle in 4/4)
 
 ---
 
@@ -525,664 +671,476 @@ document.addEventListener('click', async () => {
 
 All presets live in `.claude/skills/audiosculpt/presets/`:
 
-- `soundtrack/<style>.json` — 20 styles: instrument configs, effects, progression, tempo, **rhythmGrid**, **voiceLeading**, **melodicPatterns**, **transitions**
+- `soundtrack/<style>.json` — 20 styles with Strudel patterns
 - `sfx/<family>.json` — 6 families (sound definitions per visual event)
-- `coherence-matrix.json` — Master mapping: mode → styles, style → SFX family, **feature_profile** (arousal/valence), **text2midi_prompt**
-- `sample-map.json` — 31 instruments: CDN sample URLs + note mappings for `Tone.Sampler`
-- `synth-patches.json` — 45 FM synthesis patches: FMSynth/MonoSynth/PluckSynth params + effects (fallback for sampled instruments, primary for synth-only)
+- `coherence-matrix.json` — Master mapping: mode → styles, style → SFX family
 
-Read these files before generating any audio code. They contain tested Tone.js configurations and composition patterns.
+### Preset Structure
+
+```json
+{
+  "style": "jazz",
+  "description": "...",
+  "family": "tonal",
+
+  "temporal": {
+    "bpm": 120,
+    "range": [100, 140],
+    "swing": 0.65,
+    "timeSignature": [4, 4],
+    "endingBehavior": { ... }
+  },
+
+  "key": "Bb",
+
+  "sounds": {
+    "piano": { "source": "piano", "room": 0.25, "gain": 0.7 },
+    "bass": { "source": "triangle", "lpf": 800, "gain": 0.8 },
+    "ride": { "source": "jazz_ride", "hpf": 4000, "gain": 0.5 }
+  },
+
+  "patterns": {
+    "intro": { "rhythm": "...", "harmony": "...", "bass": "..." },
+    "build": { ... },
+    "climax": { ... },
+    "resolve": { ... }
+  },
+
+  "master": { "compressor": true, "limiter": true },
+
+  "progression": { "chords": [...], "scale": "...", "bars_per_chord": 1 },
+  "harmonic_system": { "type": "...", "functions": {...} },
+  "voiceLeading": { ... },
+  "arc": { ... },
+  "orchestration_limits": { ... },
+  "form": { ... },
+  "transitions": { ... }
+}
+```
 
 ---
 
 ## Stylistic Families
 
-Every style belongs to a **family** that determines which compositional rules apply. Read `presets/soundtrack/_family-map.json` for the canonical mapping.
+Every style belongs to a **family** that determines which compositional rules apply.
 
 | Family | Styles | Harmonic system | Voice leading | Form type |
 |--------|--------|----------------|---------------|-----------|
 | **tonal** | jazz, orchestral, neo-classical, acoustic, cinematic, corporate, upbeat, world | Functional (T-SD-D), cadences required | Full counterpoint rules | `periodo_tematico` |
-| **modal** | ambient, chillwave, lo-fi | Static fields, no cadences | No voice crossing, no oblique motion requirement | `processuale` |
-| **loop** | dnb, trap, minimal-techno, synthwave, electronic | Ostinato, power chords, reduced harmony | Parallel fifths OK, spacing + crossing only | `drop_structure` |
-| **experimental** | glitch, industrial, dramatic | Atonal, timbral, noise | Spacing only (spectral clarity) | `atematico` |
+| **modal** | ambient, chillwave, lo-fi | Static fields, no cadences | No voice crossing | `processuale` |
+| **loop** | dnb, trap, minimal-techno, synthwave, electronic | Ostinato, power chords | Parallel fifths OK | `drop_structure` |
+| **experimental** | glitch, industrial, dramatic | Atonal, timbral, noise | Spacing only | `atematico` |
 
-**Horror** is a hybrid: uses **modal** rules for sustained dread sections and **experimental** rules for shock/impact moments. The preset declares `"family": "hybrid"` with `"hybrid_families": ["modal", "experimental"]`.
-
-**Rule:** Before applying any compositional rule from sections below (counterpoint, harmony, orchestration, form), check the style's family. Rules marked with a family tag apply only to that family. Universal rules apply to all.
+**Horror** is a hybrid: uses **modal** rules for dread sections and **experimental** for shock moments.
 
 ---
 
-## Samples — 2-Level Architecture (CDN → FMSynth)
+## Voice Leading Rules
 
-Samples are served from a CDN (GitHub Pages branch `samples`) with FMSynth synthesis as automatic fallback. **31 instruments** have real samples available (see `presets/sample-map.json`); **19 instruments** are synthesis-only (see `presets/synth-patches.json`).
+### Universal (all families)
 
-### Sources & Licenses
+- **No voice crossing**: No voice may cross above/below its adjacent voice
+- **Max octave spacing**: Max one octave between adjacent voices
+- **Stepwise motion**: Between chords, voices move by step where possible
 
-| Source | Instruments | License |
-|--------|------------|---------|
-| VCSL (Versilian Studios) | Piano Steinway, Piano Upright, Harpsichord, Pipe Organ, Harp, Vibraphone, Marimba, Xylophone, Glockenspiel, Tubular Bells, Timpani, Triangle, Tambourine, Clap | CC0 (Public Domain) |
-| nbrosowsky/tonejs-instruments | Violin, Cello, Contrabass, Trumpet, Trombone, French Horn, Tuba, Flute, Clarinet, Bassoon, Saxophone, Guitar (acoustic/electric/nylon), Bass Electric, Harmonium | CC-BY 3.0 |
-| Open Source Drumkit | Kick, Snare, Hi-hat, Crash, Ride, Toms, Rimshot | Public Domain |
+### Family: tonal
 
-### How it works
+- **Parallel fifths/octaves forbidden**
+- **Contrary motion between extremes**
+- **Dominant 7th preparation and resolution**
 
-1. **Generated code** loads samples from CDN via `Tone.Sampler`
-2. If CDN fails (offline, deleted), **falls back to FMSynth** using params from `synth-patches.json`
-3. The mapping instrument → sample files lives in `presets/sample-map.json`
-4. The mapping instrument → FMSynth fallback lives in `presets/synth-patches.json` (field `sampleSource` links to sample-map)
+### Family: loop
 
-### CDN Base URL
+- **Parallel fifths permitted** (power chords are idiomatic)
+- Apply only: no voice crossing + max octave spacing
 
-```
-https://<user>.github.io/CLAUDE_SKILLS/samples/{instrument}/{note}.ogg
-```
+### Family: modal
 
-### When to use Sampler vs Synth
+- **No voice crossing** (for spatial clarity in reverb-heavy textures)
+- No obligation for contrary motion
 
-- **Acoustic instruments** (piano, strings, brass, woodwinds, guitar, mallets, drums): **Always use Sampler** — look up `sample-map.json`
-- **Synth instruments** (pads, leads, growl bass, slap bass): **Always use FMSynth** — no samples exist
-- **Electronic drums**: **Use MembraneSynth/MetalSynth/NoiseSynth** — synthesis is appropriate for electronic styles
-- **Acoustic drums**: **Use Sampler** from `drums` in sample-map.json
+### Family: experimental
 
-### Code pattern
-
-```javascript
-// Read from sample-map.json at generation time
-const SAMPLE_CDN = "https://<user>.github.io/CLAUDE_SKILLS/samples/";
-
-function loadInstrument(sampleMapEntry, synthPatch) {
-  return new Promise((resolve) => {
-    try {
-      const sampler = new Tone.Sampler({
-        urls: sampleMapEntry.urls,
-        baseUrl: SAMPLE_CDN + sampleMapEntry.name + "/",
-        onload: () => resolve(sampler),
-        onerror: () => {
-          console.warn(`Samples failed for ${sampleMapEntry.name}, using FMSynth`);
-          resolve(buildFMSynth(synthPatch));
-        }
-      });
-      // Timeout fallback (10s)
-      setTimeout(() => resolve(buildFMSynth(synthPatch)), 10000);
-    } catch (e) {
-      resolve(buildFMSynth(synthPatch));
-    }
-  });
-}
-
-function buildFMSynth(patch) {
-  // patch comes from synth-patches.json
-  if (patch.synth === "MonoSynth") return new Tone.MonoSynth(patch.params);
-  if (patch.synth.includes("PolySynth")) return new Tone.PolySynth(Tone.FMSynth, patch.params);
-  return new Tone.FMSynth(patch.params);
-}
-```
-
-**Important:** `Tone.Sampler` is already polyphonic — do NOT wrap it in PolySynth.
+- **Spacing for spectral clarity only** — all other rules violable
 
 ---
 
-## Text2midi Engine
+## Preset Inheritance System
 
-### Setup
+Create hybrid styles by extending existing presets with selective overrides. This avoids duplicating entire presets when only certain elements need to change.
 
-Run `/audiosculpt setup` or manually:
-```bash
-cd .claude/skills/audiosculpt && bash engine/setup.sh
-```
+### Schema
 
-### Check availability
-
-Before using Text2midi, the skill checks:
-```bash
-python -c "from huggingface_hub import hf_hub_download; import torch" 2>/dev/null
-```
-If this fails → use Tone.js fallback. No error message to user, just silently degrade.
-
-### Generate MIDI
-
-```bash
-python engine/generate.py \
-  --prompt "dark electronic instrumental, A minor, 122 BPM, 4/4, 23 seconds" \
-  --output /tmp/audiosculpt_soundtrack.mid
-```
-
-### Parse MIDI to events
-
-```bash
-python engine/midi2events.py /tmp/audiosculpt_soundtrack.mid
-```
-
-Outputs JSON to stdout. Each event:
 ```json
-{"time": 0.0, "track": 0, "channel": 0, "note": "C4", "duration": 0.5, "velocity": 80}
-```
+{
+  "style": "jazz-electronic",
+  "extends": "jazz",
 
-### Track-to-instrument mapping
+  "modifiers": ["electronic_drums", "synth_bass"],
 
-Map MIDI tracks to preset instruments in order:
-- Track 0 → first instrument in preset `instruments` object
-- Track 1 → second instrument
-- Track on channel 10 (drums) → kick/snare/hihat from preset
-- Extra tracks beyond preset instruments → ignore
+  "override": {
+    "sounds.bass.source": "sawtooth",
+    "sounds.bass.lpf": 400,
+    "sounds.kick": {
+      "source": "bd",
+      "bank": "RolandTR808",
+      "gain": 0.85
+    },
+    "sounds.hihat": {
+      "source": "hh",
+      "bank": "RolandTR808",
+      "hpf": 6000
+    },
+    "temporal.swing": 0.55,
+    "patterns.climax.rhythm": "stack(s('RolandTR808_bd').struct('t ~ ~ ~ t ~ ~ ~'), s('RolandTR808_hh').struct('t t t t t t t t').gain(0.6))"
+  },
 
----
-
-## Integration with video-craft
-
-### Parsing the webvideo HTML
-
-Video-craft webvideos are self-describing. Extract metadata from these sources:
-
-**1. Global config** — HTML comment in `<head>`:
-```html
-<!-- @video format="vertical-9x16" fps="30" speed="normal" mode="safe" codec="h264" -->
-```
-Extract: `mode` (→ style selection), `speed` (→ tempo adjustment), `format`.
-
-**2. Scene metadata** — HTML comments before each scene div:
-```html
-<!-- @scene name="Hook" duration="3000ms" transition-out="crossfade" transition-duration="300ms" -->
-<div class="scene layout-centered" id="scene-0" data-bg-anim="vignette">
-```
-Extract: `name`, `duration` (ms), `transition-out`, `transition-duration`.
-
-**3. Element timing** — CSS `animation` property on `.el` elements:
-```html
-<div class="el el-heading size-xl" style="animation: fade-in-up 500ms cubic-bezier(...) 200ms both;">
-```
-Parse: animation name, duration (ms), delay (ms). The delay is the **absolute** entrance time.
-
-**4. Design tokens** — CSS custom properties in `:root`:
-```css
---color-primary: #6366f1;
---color-bg: #0f0f0f;
-```
-Dark backgrounds → moodier styles; bright accents → higher energy.
-
-### Injection
-
-Insert before `</body>`:
-```html
-<script src="https://unpkg.com/tone"></script>
-<script>
-  // Generated audio code here
-</script>
-```
-
----
-
-## Audio Report
-
-Every time audiosculpt generates audio, produce a companion **HTML** report saved alongside the output. The report includes:
-- Visual score rendering (piano roll + staff notation in a unified panel)
-- **Live audio playback** with Tone.js
-- **Animated playhead** synchronized to both visualizations
-
-**File naming:** `<output-name>-audio-report.html` (e.g., `promo-v2-audio-report.html`)
-
-### Required CDN Includes
-
-```html
-<script src="https://unpkg.com/tone"></script>
-<script src="https://cdn.jsdelivr.net/npm/abcjs@6.4.1/dist/abcjs-basic-min.js"></script>
-```
-
-### Layout Structure
-
-**Toggle buttons** in the header bar: **Score** | Instruments | SFX Events | Master Chain
-
-The **Score** panel is a unified view containing both visualizations stacked vertically:
-- Piano Roll SVG (top)
-- Staff Notation / Partitura (bottom)
-
-Both share the same horizontal time axis and remain visible together (no separate toggles).
-
-### Playback Controls
-
-Add a **▶ Play** / **■ Stop** button in the header bar (above the toggle buttons):
-
-```javascript
-document.getElementById('playBtn').addEventListener('click', async () => {
-  if (isPlaying) {
-    Tone.Transport.stop();
-    Tone.Transport.position = 0;
-    isPlaying = false;
-    playBtn.textContent = '▶ Play';
-    resetPlayhead();
-    return;
-  }
-
-  await Tone.start();
-
-  // Recreate instruments with same config as video
-  const instruments = createInstruments(instrumentConfig);
-
-  // Schedule notes via Tone.Part (same data as piano roll)
-  const part = new Tone.Part((time, note) => {
-    instruments[note.instrument].triggerAttackRelease(
-      note.pitch, note.duration, time, note.velocity
-    );
-  }, noteEvents);
-  part.start(0);
-
-  // Schedule SFX (same data as SFX table)
-  scheduleSFX(sfxEvents, sfxSynth);
-
-  // Apply master chain
-  applyMasterChain(instruments, masterConfig);
-
-  Tone.Transport.bpm.value = BPM;
-  Tone.Transport.start();
-  isPlaying = true;
-  playBtn.textContent = '■ Stop';
-  startPlayheadAnimation();
-});
-```
-
-### Playhead Animation
-
-A vertical line that scrolls across both the piano roll SVG and the staff notation during playback:
-
-**Piano Roll Playhead:**
-```javascript
-const playhead = document.getElementById('playhead'); // <line> element in SVG
-function startPlayheadAnimation() {
-  function update() {
-    if (!isPlaying) return;
-    const seconds = Tone.Transport.seconds;
-    const x = (seconds / totalDuration) * pianoRollWidth;
-    playhead.setAttribute('x1', x);
-    playhead.setAttribute('x2', x);
-    requestAnimationFrame(update);
-  }
-  requestAnimationFrame(update);
+  "keep_from_parent": [
+    "harmonic_system",
+    "progression",
+    "voiceLeading",
+    "form"
+  ]
 }
 ```
 
-**Staff Notation Playhead (abcjs TimingCallbacks):**
+### Merge Logic
+
 ```javascript
-const timingCallbacks = new ABCJS.TimingCallbacks(visualObj, {
-  beatCallback: (beatNumber, totalBeats, totalTime, position) => {
-    // Highlight current beat/note
-  },
-  eventCallback: (event) => {
-    if (event) {
-      // event.elements contains the SVG elements for the current note
-      // Add/remove highlight class
+function loadPreset(styleName) {
+  const preset = readJSON(`presets/soundtrack/${styleName}.json`);
+
+  if (preset.extends) {
+    const parent = loadPreset(preset.extends);  // Recursive
+    return deepMerge(parent, preset.override, {
+      keep: preset.keep_from_parent
+    });
+  }
+
+  return preset;
+}
+```
+
+### Modifier Library
+
+| Modifier | What it changes |
+|----------|-----------------|
+| `electronic_drums` | Replaces acoustic drums with TR-808/909 |
+| `synth_bass` | Replaces acoustic bass with sawtooth/square |
+| `vintage_tape` | Adds tape saturation, wow/flutter simulation |
+| `modern_clean` | Removes room/reverb for dry sound |
+| `dark_mode` | Lowers filters, more sub, reduced highs |
+| `bright_mode` | Raises filters, more presence |
+
+### Usage Example
+
+To create "jazz with electronic drums":
+1. Create `jazz-electronic.json` that extends `jazz`
+2. Override only the drum sounds
+3. Keep harmonic system and voice leading from parent
+
+---
+
+## Loop Variation System
+
+Prevent monotony in looped audio by applying automatic variations at specified intervals.
+
+### Schema
+
+```json
+{
+  "loop_config": {
+    "base_length_bars": 8,
+    "seamless": true,
+    "return_to_tonic": true,
+
+    "variations": {
+      "every_2_loops": {
+        "action": "add_fill",
+        "position": "bar_4",
+        "pattern": "s('RolandTR808_sd').struct('~ ~ ~ t t t t t').gain(0.7)"
+      },
+      "every_4_loops": {
+        "action": "transpose_melody",
+        "semitones": 3
+      },
+      "every_8_loops": {
+        "action": "swap_pattern",
+        "target": "rhythm",
+        "alternate_with": "rhythm_variation_b"
+      }
+    },
+
+    "humanization": {
+      "velocity_variance": 0.15,
+      "timing_drift_ms": 10,
+      "apply_to": ["melody", "hihat"]
     }
   }
-});
-// Sync with Tone.Transport
-Tone.Transport.scheduleRepeat((time) => {
-  timingCallbacks.setProgress(Tone.Transport.seconds / totalDuration);
-}, '16n');
+}
 ```
 
-### Visualizations
+### Variation Actions
 
-1. **Piano Roll (SVG)** — Custom SVG, X=time, Y=MIDI pitch, color per instrument. SFX as diamonds above a dashed separator. Include legend. Add a `<line id="playhead">` element styled with white/yellow color, semi-transparent.
+| Action | Parameters | Effect |
+|--------|------------|--------|
+| `add_fill` | position, pattern | Insert drum fill at bar position |
+| `transpose_melody` | semitones | Shift melody pitch |
+| `swap_pattern` | target, alternate_with | Switch to alternate pattern |
+| `filter_sweep` | from_hz, to_hz, duration | Apply filter automation |
+| `drop_element` | target | Remove an instrument temporarily |
+| `double_time` | target | Speed up specific element |
 
-2. **Staff Notation / Partitura (abcjs)** — Render a **full score (partitura)** with ALL instruments stacked vertically, one staff per instrument, all aligned to the same timeline.
-   - **Every pitched instrument** gets its own staff (treble or bass clef as appropriate)
-   - **Percussion/noise instruments** (ride, brush, micro-perc, click) get a percussion staff or rhythm notation on a single-line staff
-   - Use `%%staves` directive to group all staves into a single system
-   - Include key signature, time signature, BPM marking
-   - Show chord symbols above the top staff
-   - Example for jazz: Piano (treble), Bass (bass clef), Ride (perc), Brush (perc) — 4 staves
-   - Example for glitch: Glitch-lead (treble), Texture-pad (treble), Sub-bass (bass), Micro-perc (perc), Click (perc) — 5 staves
-
-### Info Tables
-
-3. **Instruments** — Table: name, synth type, volume (dB), effects chain, color
-4. **SFX Events** — Full TIR event table: time, type, SFX sound
-5. **Master Chain** — Signal flow: ducking → compressor → limiter, SFX bus config
-
-### Design
-
-- Dark background (#0a0a0f), monospace, glitch aesthetic
-- Header bar with Play/Stop button + toggle buttons for panels
-- Score panel shows piano roll + partitura together (unified timeline)
-- Responsive, scrollable piano roll and partitura
-- Playhead: `stroke: rgba(255, 220, 100, 0.8); stroke-width: 2px;`
-
----
-
-## Sampled Instruments
-
-When generating code for an acoustic instrument, **always check `presets/sample-map.json` first**. If the instrument has an entry, use `Tone.Sampler` with CDN + FMSynth fallback. If not, use `presets/synth-patches.json` directly.
-
-### Instrument loading workflow
-
-1. Read `sample-map.json` → find instrument entry
-2. If found: generate `loadInstrument()` call (see code pattern in Samples section above)
-3. If not found: generate FMSynth/MonoSynth from `synth-patches.json`
-4. Apply effects from `synth-patches.json` regardless (Sampler benefits from reverb/chorus too)
-
-### Coverage
-
-- **31 sampled instruments** in `sample-map.json` (piano, strings, brass, woodwinds, guitars, bass, mallets, percussion, drums)
-- **45 FM patches** in `synth-patches.json` (26 with `sampleSource` link, 19 synthesis-only)
-- **Drums** use `Tone.Players` (multi-sample kit), not `Tone.Sampler` — see drum kit pattern below
-
-### Drum kit pattern (for acoustic styles)
+### Strudel Implementation
 
 ```javascript
-const drums = new Tone.Players({
-  urls: {
-    kick: "kick.ogg", snare: "snare.ogg",
-    "hihat-closed": "hihat-closed.ogg", "hihat-open": "hihat-open.ogg",
-    crash: "crash.ogg", ride: "ride.ogg",
-    "tom-high": "tom-high.ogg", "tom-mid": "tom-mid.ogg", "tom-low": "tom-low.ogg",
-    rimshot: "rimshot.ogg"
-  },
-  baseUrl: SAMPLE_CDN + "drums/",
-  onerror: () => { /* fall back to MembraneSynth/MetalSynth/NoiseSynth */ }
-});
-// Play: drums.player("kick").start();
+// Native Strudel variation functions
+note("<c4 e4 g4>")
+  .every(2, x => x.add(
+    s('RolandTR808_sd').struct('~ ~ ~ t t t t t').gain(0.7)
+  ))
+  .every(4, x => x.transpose(3))
+  .every(8, x => x.fast(2))
+  .sometimesBy(0.15, x => x.gain(rand.range(0.7, 1.0)))
 ```
 
-### One-shot percussion pattern (triangle, tambourine, clap)
+### Humanization
+
+Add subtle timing and velocity variations to mechanical-sounding loops:
 
 ```javascript
-const triangle = new Tone.Player({
-  url: SAMPLE_CDN + "triangle/hit.ogg",
-  onerror: () => { /* fall back to MetalSynth */ }
-});
-// Play: triangle.start();
+// Velocity variance
+note("<c4 e4 g4>").gain(perlin.range(0.7, 1.0))
+
+// Timing drift (swing variation)
+s('RolandTR808_hh').struct('t t t t').nudge(perlin.range(-0.01, 0.01))
 ```
 
 ---
 
-## Gain Staging Guidelines
+## Feel Profiles
 
-Follow these rules when generating Tone.js code to prevent distortion:
+Layer rhythmic "feel" on top of time signature. The time signature defines meter; the feel profile defines groove.
 
-### Volume budget
+### Available Profiles
 
-Target peak: **-3dB** (limiter threshold). Use the dynamic gain formula in "Orchestration Density → Dynamic gain staging" below. Do not use fixed per-layer values.
-
-### Master chain defaults
-
-Most presets use: EQ3 → Compressor → Filter (lowpass 16kHz) → Limiter. Some presets (jazz, glitch, minimal-techno, neo-classical) omit EQ3.
-
-```javascript
-// Full chain (16/20 presets)
-new Tone.EQ3({ low: 2, mid: 0, high: -2 })
-new Tone.Compressor({ threshold: -18, ratio: 3, attack: 0.01, release: 0.15 })
-new Tone.Filter({ frequency: 16000, type: "lowpass", rolloff: -12 })
-new Tone.Limiter(-3)
-
-// Reduced chain (4/20 presets: jazz, glitch, minimal-techno, neo-classical)
-new Tone.Compressor({ threshold: -18, ratio: 3, attack: 0.01, release: 0.15 })
-new Tone.Filter({ frequency: 16000, type: "lowpass", rolloff: -12 })
-new Tone.Limiter(-3)
+```json
+{
+  "feel_profiles": {
+    "straight": {
+      "swing": 0.5,
+      "accent_pattern": [1, 0.5, 0.7, 0.5],
+      "grid": 16,
+      "description": "Even 16th notes, rock/pop feel"
+    },
+    "shuffle": {
+      "swing": 0.62,
+      "accent_pattern": [1, 0.3, 0.8, 0.3],
+      "grid": 12,
+      "description": "Triplet swing, blues/jazz feel"
+    },
+    "compound": {
+      "swing": 0.5,
+      "accent_pattern": [1, 0.4, 0.4, 1, 0.4, 0.4],
+      "grid": 12,
+      "grouping": [3, 3],
+      "description": "6/8 or 12/8 feel, folk/Celtic"
+    },
+    "halftime": {
+      "swing": 0.5,
+      "accent_pattern": [1, 0.3, 0.5, 0.3, 0.9, 0.3, 0.5, 0.3],
+      "grid": 16,
+      "snare_on": [5],
+      "description": "Snare on 3, trap/hip-hop feel"
+    }
+  }
+}
 ```
 
-### SFX routing
+### Profile Components
 
-SFX bus must use a **separate compressor** from the soundtrack bus:
-```javascript
-const sfxComp = new Tone.Compressor({ threshold: -14, ratio: 2.5 });
-sfxBus.chain(sfxComp, masterLimiter, Tone.getDestination());
-```
+| Component | Description |
+|-----------|-------------|
+| `swing` | Ratio of long:short notes (0.5 = even, 0.67 = 2:1 triplet) |
+| `accent_pattern` | Velocity multipliers per beat (1.0 = full, 0.5 = ghost) |
+| `grid` | Subdivisions per bar (16 = 16th notes, 12 = triplets) |
+| `grouping` | How subdivisions are grouped (for compound meters) |
+| `snare_on` | Which beats get the snare (for drum patterns) |
 
-### BitCrusher safe values
-
-| bits | Sound | Use for |
-|------|-------|---------|
-| 3-4 | Extreme, unusable in dense mixes | Avoid in presets |
-| 6 | Audible lo-fi, still musical | Glitch lead, percussion |
-| 8 | Subtle texture | Pads, ambient |
-| 12+ | Nearly transparent | Background elements |
-
-### Delay feedback limits
-
-| Context | Max feedback |
-|---------|-------------|
-| Dense 16th-note patterns | 0.3 |
-| Sparse patterns (quarter notes) | 0.5 |
-| Solo instrument / FX tail | 0.6 |
-
-Never stack BitCrusher + Distortion + high-feedback Delay on the same instrument.
-
-### Ducking
-
-When SFX fires, duck the soundtrack bus:
+### Strudel Implementation
 
 ```javascript
-duckGain.gain.linearRampToValueAtTime(0.15, time + 0.03);  // -16dB in 30ms
-duckGain.gain.linearRampToValueAtTime(1, time + 0.33);     // recover in 300ms
+// Straight 16ths
+s('RolandTR808_hh').struct('t t t t t t t t t t t t t t t t')
+  .gain('<1 0.5 0.7 0.5 1 0.5 0.7 0.5>')
+
+// Shuffle (swing)
+s('RolandTR808_hh').struct('t(3,8)')  // Euclidean approximation
+  .swing(0.62)
+
+// Halftime feel
+stack(
+  s('RolandTR808_bd').struct('t ~ ~ ~ ~ ~ ~ ~'),  // Kick on 1
+  s('RolandTR808_sd').struct('~ ~ ~ ~ t ~ ~ ~')   // Snare on 3
+).gain('<1 0.3 0.5 0.3 0.9 0.3 0.5 0.3>')
 ```
 
-Key SFX (scene transitions, CTA) should be louder than ambient SFX (keystrokes):
-- scene-transition stinger: -12 dB
-- CTA stinger: -10 dB
-- element-appear blip: -14 dB
-- keystroke, noise: -16 to -18 dB
+### Style Defaults
 
-### Soundtrack Accent Sync
+| Style | Default Feel |
+|-------|--------------|
+| jazz | shuffle |
+| trap | halftime |
+| dnb | straight |
+| orchestral | straight |
+| lo-fi | shuffle |
+| world | compound |
 
-Schedule extra **accent hits** on the soundtrack bus that align with key visual events (scene transitions, CTA). This ties the rhythm to the video timeline:
+---
+
+## Soft Orchestration Constraints
+
+Spectral guidelines that issue warnings rather than errors. Rules can be violated for stylistic effect.
+
+### Schema
+
+```json
+{
+  "spectral_guidelines": {
+    "sub_20_80hz": {
+      "max_simultaneous": 1,
+      "violation": "warn",
+      "exceptions": ["dubstep", "trap"],
+      "reason": "Multiple fundamentals cause mud"
+    },
+    "bass_80_250hz": {
+      "max_simultaneous": 2,
+      "min_interval": "P5",
+      "violation": "warn",
+      "reason": "Close intervals cause beating"
+    },
+    "mid_250_2000hz": {
+      "max_simultaneous": 4,
+      "violation": "auto_reduce_lowest_gain",
+      "reason": "Crowded mids reduce clarity"
+    },
+    "high_2000_8000hz": {
+      "max_simultaneous": 3,
+      "violation": "warn",
+      "reason": "Harshness from stacked highs"
+    },
+    "air_8000_20000hz": {
+      "max_simultaneous": 2,
+      "violation": "info",
+      "reason": "Generally forgiving range"
+    }
+  }
+}
+```
+
+### Violation Levels
+
+| Level | Behavior |
+|-------|----------|
+| `info` | Log in audio report, no action |
+| `warn` | Highlight in audio report, suggest fix |
+| `auto_reduce_lowest_gain` | Automatically reduce quietest voice |
+| `error` | Block generation (use sparingly) |
+
+### Style Exceptions
+
+Some styles intentionally violate constraints:
+
+| Style | Allowed Violations |
+|-------|-------------------|
+| dubstep | Multiple sub elements |
+| trap | Multiple sub elements, crowded bass |
+| industrial | Crowded mids, harsh highs |
+| ambient | Extended reverb overlap |
+
+### Implementation
 
 ```javascript
-// On scene-transition and cta-final events:
-const barIdx = Math.floor(eventTime / barDur);
-subBass.triggerAttackRelease(subBassNotes[barIdx], "8n", time, 0.7);
-clickSynth.triggerAttackRelease("32n", time, 0.6);
+function checkSpectralGuidelines(voices, style) {
+  const guidelines = spectralGuidelines;
+  const warnings = [];
+
+  for (const [band, rule] of Object.entries(guidelines)) {
+    const voicesInBand = voices.filter(v => inBand(v.frequency, band));
+
+    if (voicesInBand.length > rule.max_simultaneous) {
+      if (rule.exceptions?.includes(style)) continue;
+
+      if (rule.violation === 'warn') {
+        warnings.push({
+          band,
+          count: voicesInBand.length,
+          max: rule.max_simultaneous,
+          reason: rule.reason
+        });
+      } else if (rule.violation === 'auto_reduce_lowest_gain') {
+        const quietest = voicesInBand.sort((a,b) => a.gain - b.gain)[0];
+        quietest.gain *= 0.5;
+      }
+    }
+  }
+
+  return warnings;
+}
 ```
 
-This creates a "punch" in the soundtrack that coincides with visual impacts.
+### Audio Report Integration
 
-### Arrangement Rules (Voice Leading & Rhythm)
+When constraints are violated, the audio report shows:
 
-These rules prevent common problems visible on a piano roll and audible in playback. Rules are tagged by family applicability.
-
-#### Voice leading — Universal (all families)
-
-- **No voice crossing**: No voice may cross above/below its adjacent voice at any point.
-- **Max octave spacing**: Max one octave between adjacent voices (when polyphonic).
-- **Tight register**: All chord voicings for a piece must stay within a ~2 octave band. Never jump between spread/drop2/root voicings that shift the entire register.
-- **Stepwise motion**: Between consecutive chords, each voice should move by half-step or whole-step where possible. Common tones stay put.
-- **Repetition for stability**: Repeating the same chord for 2 bars before moving creates a visual "plateau" — more readable and grounded than chord-per-bar changes.
-
-#### Voice leading — Family: tonal
-
-- **Parallel fifths/octaves forbidden**: No pair of voices may move in parallel motion forming consecutive P5 or P8.
-- **Contrary motion between extremes**: When the top voice leaps (interval > 2nd), the bottom voice must move in contrary or oblique motion.
-- **Dominant 7th preparation**: The 7th of V7 must be prepared (common tone) or approached by step, and resolved down by step.
-  - **Jazz exception**: In bebop/hard-bop contexts, the 7th may enter as part of a shell voicing without classical preparation.
-- **Parallel motion check**: Each transition in `voiceLeading.transitions` must declare which voice pairs move in parallel and whether the resulting interval is licit.
-
-#### Voice leading — Family: loop
-
-- **Parallel fifths permitted** (power chords, riffs, ostinati are idiomatic).
-- **Dominant 7th preparation**: Not applicable.
-- Apply only: no voice crossing + max octave spacing.
-
-#### Voice leading — Family: modal
-
-- **No voice crossing** (for spatial clarity in reverb-heavy textures).
-- No obligation for contrary motion (voices move by harmonic fields, not function).
-
-#### Voice leading — Family: experimental
-
-- **Spacing for spectral clarity only** — all other rules violable as explicit stylistic choice.
-
-#### Bass line
-
-- **Stepwise only**: Sub-bass notes between consecutive bars must move by half-step or whole-step maximum. No tritone leaps, no octave jumps.
-- **Follow the root**: Bass note = root of the current chord. If chord repeats, bass repeats.
-
-#### Melodic lead
-
-- **Minimum 1 octave range**: Lead phrases must span at least an octave to create visible melodic contour on a piano roll. A 3-semitone range reads as a flat line.
-- **Alternate phrase shapes**: Use at least 2 contrasting phrases (e.g., descending arc + ascending arc) that alternate per bar.
-
-#### Rhythm grids
-
-- **Grid-locked timing**: ALL hits MUST land on exact 16th-note positions. See "Timing Rules (MANDATORY)" section above. Zero tolerance for timing randomization.
-- **Use preset grids**: Always use the `rhythmGrid` arrays from the preset JSON. Do not invent patterns. Alternate between the preset's phase-specific grids (intro/build/climax/resolve).
-- **No identical bars**: Create at least 2 complementary grids (gridA/gridB) that alternate, so consecutive bars have different hit patterns. Derive gridB by shifting velocities or swapping accents, not by inventing new patterns.
-- **Breathing room**: Percussion grids should fill at most ~60% of `stepsPerBar` slots. Wall-to-wall hits create a flat block with no rhythmic identity.
-- **Complementary placement**: If gridA has hits on beats 1,3,7,9, gridB should favor beats 2,4,8,10 — creating a call-and-response feel across bar pairs.
+```
+⚠️ Spectral Warning: bass_80_250hz
+   3 voices (max 2) — close intervals may cause beating
+   Affected: bass, pad_low, kick_body
+   Suggestion: Filter pad below 250Hz or reduce gain
+```
 
 ---
 
 ## Functional Harmony
 
-**Applies to: family tonal only.** Other families use different harmonic systems (see below).
+**Applies to: family tonal only.**
 
-### Rules (family tonal)
+- Every chord must have a declared function: **T**, **SD**, **D**, or special label
+- Every tonal progression must end with a formal cadence
+- Non-diatonic chords must be annotated
 
-- Every chord in a progression must have a declared function: **T** (tonic), **SD** (subdominant), **D** (dominant), or a special label (V/V, borrowed chord, etc.)
-- Every tonal progression must end with a formal cadence: **authentic** (V→I), **plagal** (IV→I), **half** (→V), or **deceptive** (V→vi)
-- Non-diatonic chords must be annotated with their origin (secondary dominant, modal borrowing, tritone substitution, etc.)
-
-### Harmonic system types (preset field `harmonic_system`)
+### Harmonic system types
 
 | Type | Families | Description |
 |------|----------|-------------|
-| `functional_tonal` | tonal | Functions (T/SD/D) + cadences required |
-| `modal_static` | modal | Pad without cadences, static harmonic field |
-| `timbral_vector` | loop | Filter opens/closes — not chord changes |
-| `atonal_cluster` | experimental | Noise bands, non-harmonic timbres |
-
-### Preset format
-
-```json
-"harmonic_system": {
-  "type": "functional_tonal",
-  "functions": { "IImaj7": "SD", "V7": "D", "Imaj7": "T" },
-  "cadences": { "bar_4": "half", "bar_8": "authentic" }
-}
-```
-
-For non-tonal families:
-```json
-"harmonic_system": {
-  "type": "modal_static",
-  "field": "Dorian on D",
-  "cadences": "none"
-}
-```
+| `functional_tonal` | tonal | Functions (T/SD/D) + cadences |
+| `modal_static` | modal | Static harmonic field |
+| `timbral_vector` | loop | Filter sweeps, not chord changes |
+| `atonal_cluster` | experimental | Noise bands, non-harmonic |
 
 ---
 
 ## Orchestration
 
-**Applies to: all families (universal).**
+### Register rules (all families)
 
-### Register rules
-
-- Every instrument must have a declared effective range; notes outside range are forbidden.
-- **Below 100Hz**: Max one fundamental per chord (avoid mud).
-- **Below C3**: Max 2 simultaneous notes, minimum 5th distance between fundamentals.
-- **Above C5**: Max 3 simultaneous notes.
-- Do not overlap fundamentals of different chords in nearby octaves below 200Hz.
-- If 2+ instruments play below 80Hz: minimum 7 semitones apart to avoid excessive beating.
-
-### Preset format — instrument range
-
-For acoustic/sampled instruments:
-```json
-"piano": {
-  "range": ["A1", "C7"],
-  "optimal_range": ["F2", "C6"],
-  "below_c3": "avoid dense chords, max root+5th",
-  "above_c5": "max 3 notes, use for melody"
-}
-```
-
-For electronic instruments (loop/experimental families):
-```json
-"sub_bass": {
-  "range": ["E1", "G2"],
-  "fundamental_max_hz": 100,
-  "overlap_rule": "If 2 instruments below 80Hz, min 7 semitones apart"
-}
-```
-
----
-
-## Form and Phrasing
-
-Form type depends on the style's family. Check `_family-map.json`.
-
-### periodo_tematico (family: tonal)
-
-Phrases have thematic relationships. For durations > 30s, use motivic development.
-
-- **Antecedent**: phrase ending on half cadence (open, unresolved)
-- **Consequent**: phrase ending on authentic cadence (closed, resolved)
-- **Development** (climax): sequence, inversion, augmentation of the antecedent motif
-
-```json
-"phrases": [
-  { "role": "antecedent", "notes": [...], "rhythm": [...], "cadence": "half" },
-  { "role": "consequent", "notes": [...], "rhythm": [...], "cadence": "authentic" }
-],
-"development": {
-  "climax": "ascending_sequence_by_thirds",
-  "resolve": "inversion_of_antecedent"
-}
-```
-
-### drop_structure (family: loop)
-
-Tension/release is rhythmic, not harmonic.
-
-- Intro → build → drop → breakdown → drop
-- Define tension and release points
-
-```json
-"form": {
-  "type": "drop_structure",
-  "tension_point": "build_to_climax",
-  "release": "rhythmic"
-}
-```
-
-### processuale (family: modal)
-
-Gradual timbral evolution. The "phrase" is a timbral gesture (e.g., filter opening), not a note sequence.
-
-```json
-"form": {
-  "type": "processuale",
-  "evolution_params": ["cutoff", "wet", "depth"]
-}
-```
-
-### atematico (family: experimental)
-
-No thematic structure. Organization by density/rarefaction, sonic events.
-
-```json
-"form": {
-  "type": "atematico",
-  "density_per_phase": { "intro": 0.2, "build": 0.5, "climax": 0.9, "resolve": 0.3 }
-}
-```
-
----
-
-## Orchestration Density
+- **Below 100Hz**: Max one fundamental per chord
+- **Below C3**: Max 2 simultaneous notes
+- **Above C5**: Max 3 simultaneous notes
 
 ### Voice slot limits per family
 
-| Family | Max instruments (hard limit) | Rationale |
-|--------|------------------------------|-----------|
-| tonal | 6 | Voice leading unmanageable beyond 6; muddy mix |
-| modal | 4 | Reverb space is protagonist; too many voices kill it |
-| loop | 7 | Kick+snare must cut through; beyond 7, transients mask each other |
-| experimental | 8 | 8 narrow-band noises < 3 spectral pads in damage |
-
-**Spectral rule:** If 2+ instruments are "filled" (e.g., chord stab occupying full mid range), they count as 2 voices regardless of note count.
+| Family | Max instruments | Rationale |
+|--------|-----------------|-----------|
+| tonal | 6 | Voice leading unmanageable beyond 6 |
+| modal | 4 | Reverb space is protagonist |
+| loop | 7 | Transients must cut through |
+| experimental | 8 | Narrow-band noises stack better |
 
 ### Active voice slots per arc phase
 
-Each preset must declare `orchestration_limits` with `max_simultaneous_voices` per phase:
+Each preset declares `orchestration_limits`:
 
 ```json
 "orchestration_limits": {
@@ -1190,180 +1148,167 @@ Each preset must declare `orchestration_limits` with `max_simultaneous_voices` p
   "build": { "max_simultaneous_voices": 4 },
   "climax": { "max_simultaneous_voices": 5 },
   "resolve": { "max_simultaneous_voices": 3 },
-  "hard_limit": 6,
-  "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  "hard_limit": 6
 }
 ```
 
-### Dynamic gain staging
+---
 
-Replaces the static volume table above. Use this formula:
+## Form and Phrasing
 
-- **Base per instrument**: -20dB
-- **Penalty**: -3dB for each voice beyond the 4th
-- Example: 5 instruments = -20dB + (-3dB) = -23dB per instrument
-- **7+ instruments**: Also reduce reverb wet by 30% to avoid intermodulation on tails
+### periodo_tematico (family: tonal)
+
+- **Antecedent**: phrase ending on half cadence
+- **Consequent**: phrase ending on authentic cadence
+- **Development**: sequence, inversion, augmentation
+
+### drop_structure (family: loop)
+
+- Intro → build → drop → breakdown → drop
+- Tension/release is rhythmic, not harmonic
+
+### processuale (family: modal)
+
+- Gradual timbral evolution
+- "Phrase" = timbral gesture (filter opening)
+
+### atematico (family: experimental)
+
+- No thematic structure
+- Organization by density/rarefaction
 
 ---
 
 ## Temporal Quantization
 
-Algorithm for translating video `totalMs` into musical structure.
-
-### Step 1: Theoretical bar count
+### Step 1: Bar count
 
 ```
 msPerBar = (60000 / BPM) * 4
 rawBars = totalMs / msPerBar
 ```
 
-### Step 2: Quantization strategy (branching)
+### Step 2: Quantization
 
 ```
 deviation = |totalMs - round(rawBars) * msPerBar| / totalMs
 
-If deviation < 2%     → exact_quantization (use theoretical BPM, round bars)
-If totalMs < 30000    → tempo_stretch (adapt BPM, max ±5% from preset)
-Otherwise             → bar_adjust (round to nearest multiple of progression cycle)
+If deviation < 2%     → exact_quantization
+If totalMs < 30000    → tempo_stretch (±5% max)
+Otherwise             → bar_adjust
 ```
 
-### Step 3: Cyclic progression fitting
-
-```
-cycleLength = numChords * barsPerChord
-fullCycles = floor(totalBars / cycleLength)
-remainder = totalBars % cycleLength
-
-If remainder == 0  → complete_cadence (last chord is tonic)
-If remainder <= 2  → truncate_and_cadence (force cadence on last 2 bars)
-If remainder > 2   → partial_cycle (play remainder bars, modulate to cadence)
-```
-
-### Step 4: Validation
-
-```
-finalMs = totalBars * msPerBarActual
-assert |finalMs - totalMs| < 50ms (1 frame @ 20fps)
-```
-
-### Edge cases
-
-- **Video < 2 bars at preset BPM**: Non-metric mode (sound design hit, not music)
-- **Asymmetric progression** (e.g., 5 chords): Irregular cycle, the modulo logic adapts
-
-### Preset format — `temporal` field (replaces `tempo`)
-
-```json
-"temporal": {
-  "bpm": 120,
-  "range": [100, 140],
-  "swing": 0.65,
-  "timeSignature": [4, 4],
-  "endingBehavior": {
-    "type": "cadential_insert",
-    "cadenceBars": 2,
-    "forceTonicLastBar": true,
-    "maxTempoDeviationPercent": 5
-  }
-}
-```
-
-**Ending behavior types:**
+### Ending behavior types
 
 | Type | Families | Description |
 |------|----------|-------------|
-| `cadential_insert` | tonal | Insert formal cadence in last 2 bars |
-| `fade_out` | modal | Volume ramp in last bars |
+| `cadential_insert` | tonal | Formal cadence in last 2 bars |
+| `fade_out` | modal | Volume ramp |
 | `hard_cut` | loop | Hard cut on last beat |
-| `loop_and_fade` | modal (chillwave, lo-fi) | Repeat last cycle with fade |
 
-### Time Signature Rules (MANDATORY)
+---
 
-**The time signature is a pre-compositional decision. It is set ONCE in `temporal.timeSignature` and MUST NOT change during the soundtrack.**
+## Ducking
 
-#### Core Formulas
-
-All timing derives from the time signature `[N, D]` where N = numerator (beats per bar), D = denominator (beat unit):
-
-```
-stepsPerBar  = N * (16 / D)        // subdivisions per bar in 16th notes
-subdivision  = 60 / BPM / (16 / D) // duration of one grid step in seconds
-barDuration  = stepsPerBar * subdivision
-             = N * (60 / BPM) * (4 / D)
-```
-
-| Time Sig | N | D | stepsPerBar | subdivision (at 120 BPM) | barDuration |
-|----------|---|---|-------------|--------------------------|-------------|
-| 4/4      | 4 | 4 | 16          | 0.125s                   | 2.0s        |
-| 3/4      | 3 | 4 | 12          | 0.125s                   | 1.5s        |
-| 2/4      | 2 | 4 | 8           | 0.125s                   | 1.0s        |
-| 6/8      | 6 | 8 | 12          | 0.0625s                  | 0.75s       |
-| 5/4      | 5 | 4 | 20          | 0.125s                   | 2.5s        |
-| 7/8      | 7 | 8 | 14          | 0.0625s                  | 0.875s      |
-| 12/8     | 12| 8 | 24          | 0.0625s                  | 1.5s        |
-
-#### Implementation
+When SFX play, reduce soundtrack volume:
 
 ```javascript
-// Read from preset
-const [N, D] = preset.temporal.timeSignature; // e.g. [3, 4]
-const stepsPerBar = N * (16 / D);             // 3/4 → 12, 6/8 → 12, 7/8 → 14
-const subdivision = 60 / BPM / (16 / D);      // duration of one grid step
-const barDuration = stepsPerBar * subdivision;
+// In Strudel, use gain automation
+const duckPattern = `stack(
+  ${soundtrackPattern}.gain(0.15),  // ducked
+  ${sfxPattern}
+)`;
 
-// Schedule notes — same pattern as 4/4 but with stepsPerBar instead of 16
-for (let s = 0; s < stepsPerBar; s++) {
-  const vel = grid[s];
-  if (vel > 0) {
-    const time = barStart + s * subdivision;
-    Tone.Transport.schedule(t => instr.triggerAttackRelease(note, dur, t, rv(vel)), time);
-  }
-}
+// Or schedule gain changes
+setTimeout(() => {
+  // Duck soundtrack by reducing gain
+}, sfxTime);
 ```
 
-#### rhythmGrid sizing
+Apply ducking to:
+- All SFX in **cinematic**, **hyper**, **dark** families
+- Scene transitions (always)
+- CTA final (always)
 
-The `rhythmGrid` arrays MUST have exactly `stepsPerBar` entries:
+---
 
-| Time Sig | Grid length | Example (kick in 3/4 waltz) |
-|----------|-------------|-----------------------------|
-| 4/4      | 16 steps    | `[0.9,0,0,0, 0.7,0,0,0, 0.9,0,0,0, 0.7,0,0,0]` |
-| 3/4      | 12 steps    | `[0.9,0,0,0, 0.6,0,0,0, 0.6,0,0,0]` |
-| 6/8      | 12 steps    | `[0.9,0,0, 0.5,0,0, 0.8,0,0, 0.5,0,0]` |
-| 5/4      | 20 steps    | `[0.9,0,0,0, 0.7,0,0,0, 0.8,0,0,0, 0.6,0,0,0, 0.7,0,0,0]` |
-| 7/8      | 14 steps    | `[0.9,0,0, 0.7,0,0, 0.8,0,0, 0.6,0,0, 0.7,0]` |
+## Integration with video-craft
 
-**Validation rule:** If `grid.length !== stepsPerBar`, reject the grid. Do not pad or truncate.
+### Parsing the webvideo HTML
 
-#### Beat grouping (compound vs simple)
+**1. Global config** — HTML comment in `<head>`:
+```html
+<!-- @video format="vertical-9x16" fps="30" speed="normal" mode="safe" codec="h264" -->
+```
 
-The denominator determines grouping:
+**2. Scene metadata** — HTML comments before each scene div:
+```html
+<!-- @scene name="Hook" duration="3000ms" transition-out="crossfade" transition-duration="300ms" -->
+```
 
-- **D = 4 (simple)**: beats subdivide in 2. Steps per beat = 4 (16th notes).
-  - 4/4: groups of 4 steps → `[beat1: 0-3][beat2: 4-7][beat3: 8-11][beat4: 12-15]`
-  - 3/4: groups of 4 steps → `[beat1: 0-3][beat2: 4-7][beat3: 8-11]`
-  - 5/4: groups of 4 steps → `[beat1: 0-3][beat2: 4-7][beat3: 8-11][beat4: 12-15][beat5: 16-19]`
+**3. Element timing** — CSS `animation` property on `.el` elements
 
-- **D = 8 (compound)**: beats subdivide in 3. Steps per beat = 2 (16th notes within an 8th-note pulse).
-  - 6/8: two dotted-quarter groups → `[group1: 0-5][group2: 6-11]`
-  - 7/8: asymmetric → typically `[2+2+3]` or `[3+2+2]`, defined in preset
-  - 12/8: four dotted-quarter groups → `[g1: 0-5][g2: 6-11][g3: 12-17][g4: 18-23]`
+### Injection
 
-For compound meters (D=8), accents fall on group boundaries, not on every 4th step.
+Insert before `</body>`:
+```html
+<script src="https://unpkg.com/@strudel/web@1.0.3"></script>
+<script>
+  // Generated Strudel code here
+</script>
+```
 
-#### Immutability constraint
+---
 
-- The time signature is **locked at composition start**. It comes from the preset and cannot be changed mid-soundtrack.
-- If a soundtrack needs a meter change (extremely rare), it must be two separate presets concatenated, NOT a mid-stream switch.
-- `Tone.Transport.timeSignature` must be set once before scheduling: `Tone.Transport.timeSignature = [N, D];`
+## Audio Report
 
-#### Melodic note placement by time signature
+Every time audiosculpt generates audio, produce a companion **HTML** report with:
+- Visual score rendering (piano roll)
+- **Live audio playback** with Strudel
+- **Animated playhead** synchronized to visualization
 
-Quarter notes, 8th notes, etc. map to grid positions based on `stepsPerBar`:
+**File naming:** `<output-name>-audio-report.html`
 
-| Note value | Grid positions (D=4) | Grid positions (D=8) |
-|------------|---------------------|---------------------|
-| Quarter    | every 4 steps       | every 2 steps (= dotted 8th in compound) |
-| 8th        | every 2 steps       | every step           |
-| Half       | every 8 steps       | every 4 steps        |
-| Dotted quarter | every 6 steps  | every 3 steps (= one beat in compound)  |
+### Required CDN Includes
+
+```html
+<script src="https://unpkg.com/@strudel/web@1.0.3"></script>
+<script src="https://cdn.jsdelivr.net/npm/abcjs@6.4.1/dist/abcjs-basic-min.js"></script>
+```
+
+### Layout Structure
+
+Toggle buttons: **Score** | Instruments | SFX Events | Master Chain
+
+### Playback Controls
+
+```javascript
+document.getElementById('playBtn').addEventListener('click', async () => {
+  const { initStrudel, repl } = await import('https://unpkg.com/@strudel/web@1.0.3');
+  await initStrudel();
+  setcpm(BPM / 4);
+
+  if (isPlaying) {
+    hush();
+    isPlaying = false;
+    playBtn.textContent = '▶ Play';
+    return;
+  }
+
+  await repl({ code: currentPattern }).start();
+  isPlaying = true;
+  playBtn.textContent = '■ Stop';
+  startPlayheadAnimation();
+});
+```
+
+### Visualizations
+
+1. **Piano Roll (SVG)** — X=time, Y=MIDI pitch, color per instrument
+2. **Staff Notation (abcjs)** — Full score with all instruments stacked
+
+### Info Tables
+
+3. **Instruments** — Table: name, sound source, effects, gain
+4. **SFX Events** — Full TIR event table
+5. **Master Chain** — Signal flow: ducking → compressor → limiter

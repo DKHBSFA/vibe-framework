@@ -2,6 +2,51 @@
   "style": "neo-classical",
   "description": "Intimate solo piano with minimal string accompaniment, slow harmonic movement, and delicate suspensions.",
   "family": "tonal",
+
+  "impact_frame": {
+    "enabled": true,
+    "duration_ms": 3000,
+    "layers": {
+      "0ms": {
+        "role": "attention_grabber",
+        "strudel": "chord('Am').voicing().s('piano').room(0.4).gain(0.85)"
+      },
+      "100ms": {
+        "role": "genre_signifier",
+        "strudel": "chord('Am').voicing().s('sine').fm(2.01).fmh(1.5).room(0.5).gain(0.5)"
+      },
+      "500ms": {
+        "role": "hook_motif",
+        "strudel": "note('<a4 c5 e5 a5>').s('piano').room(0.35).gain(0.65)"
+      }
+    }
+  },
+
+  "voiceover_mode": {
+    "enabled": false,
+    "layers": {
+      "sub_bed": {
+        "frequency_focus": "below_200hz",
+        "instruments": ["bass_strings"],
+        "gain": 0.8,
+        "filter": { "lpf": 200 }
+      },
+      "air_bed": {
+        "frequency_focus": "above_4000hz",
+        "instruments": ["strings_high"],
+        "gain": 0.6,
+        "filter": { "hpf": 4000 }
+      },
+      "mid_punctuation": {
+        "frequency_focus": "200hz_4000hz",
+        "instruments": ["piano"],
+        "gain": 0.25,
+        "sparse": true,
+        "max_events_per_bar": 2
+      }
+    }
+  },
+
   "temporal": {
     "bpm": 70,
     "range": [60, 80],
@@ -14,81 +59,65 @@
       "maxTempoDeviationPercent": 5
     }
   },
+
   "key": "Am",
-  "instruments": {
+
+  "sounds": {
     "piano": {
-      "type": "PolySynth",
-      "config": {
-        "voice": "FMSynth",
-        "maxPolyphony": 10,
-        "options": {
-          "harmonicity": 3,
-          "modulationIndex": 0.6,
-          "oscillator": { "type": "sine" },
-          "modulation": { "type": "sine" },
-          "envelope": { "attack": 0.003, "decay": 2.0, "sustain": 0.1, "release": 3.0 },
-          "modulationEnvelope": { "attack": 0.005, "decay": 1.5, "sustain": 0.15, "release": 2.5 }
-        }
-      },
-      "volume": -18,
-      "range": ["A1", "C7"],
-      "optimal_range": ["F2", "C6"],
-      "effects": [
-        { "type": "Reverb", "config": { "decay": 4.0, "wet": 0.35, "preDelay": 0.02 } },
-        { "type": "EQ3", "config": { "low": -2, "mid": 1, "high": 2, "lowFrequency": 250, "highFrequency": 4000 } }
-      ]
+      "source": "piano",
+      "room": 0.35,
+      "gain": 0.6
     },
     "strings": {
-      "type": "PolySynth",
-      "config": {
-        "voice": "FMSynth",
-        "maxPolyphony": 4,
-        "options": {
-          "harmonicity": 2.01,
-          "modulationIndex": 1.5,
-          "oscillator": { "type": "sine" },
-          "modulation": { "type": "triangle" },
-          "envelope": { "attack": 1.5, "decay": 0.5, "sustain": 0.85, "release": 3.5 },
-          "modulationEnvelope": { "attack": 1.0, "decay": 0.3, "sustain": 0.7, "release": 3.0 }
-        }
-      },
-      "volume": -16,
-      "range": ["G3", "E6"],
-      "optimal_range": ["G3", "D6"],
-      "effects": [
-        { "type": "Chorus", "config": { "frequency": 0.5, "delayTime": 4, "depth": 0.4, "wet": 0.25 } },
-        { "type": "Reverb", "config": { "decay": 5.0, "wet": 0.5 } }
-      ]
+      "source": "sine",
+      "fm": 2.01,
+      "fmh": 1.5,
+      "room": 0.5,
+      "gain": 0.5
     },
     "cello": {
-      "type": "MonoSynth",
-      "config": {
-        "oscillator": { "type": "sawtooth" },
-        "filter": { "Q": 1.5, "type": "lowpass", "rolloff": -24 },
-        "envelope": { "attack": 0.8, "decay": 0.3, "sustain": 0.8, "release": 2.5 },
-        "filterEnvelope": { "attack": 0.5, "decay": 0.2, "sustain": 0.4, "release": 2.0, "baseFrequency": 400, "octaves": 1.5 }
-      },
-      "volume": -14,
-      "range": ["C2", "A5"],
-      "optimal_range": ["C2", "G4"],
-      "effects": [
-        { "type": "Vibrato", "config": { "frequency": 5, "depth": 0.12, "wet": 0.5 } },
-        { "type": "Reverb", "config": { "decay": 4.0, "wet": 0.4 } }
-      ]
+      "source": "sawtooth",
+      "lpf": 600,
+      "room": 0.4,
+      "gain": 0.55
     }
   },
-  "master": {
-    "effects": [
-      { "type": "Compressor", "config": { "threshold": -18, "ratio": 2, "attack": 0.05, "release": 0.3 } },
-      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
-        { "type": "Limiter", "config": { "threshold": -3 } }
-    ]
+
+  "patterns": {
+    "intro": {
+      "rhythm": "silent",
+      "harmony": "silent",
+      "piano": "note('<a3 c4 e4 a4>(3,8)').s('piano').room(0.35).gain(0.25).slow(4)"
+    },
+    "build": {
+      "rhythm": "silent",
+      "harmony": "chord('<Am F C G>').voicing().s('sine').fm(2.01).fmh(1.5).room(0.5).gain(0.3).slow(8)",
+      "piano": "note('<a3 c4 e4 a4 e4 c4>(5,8)').s('piano').room(0.35).gain(0.4).slow(2)"
+    },
+    "climax": {
+      "rhythm": "silent",
+      "harmony": "chord('<Am F C G Dm E Am Am>').voicing().s('sine').fm(2.01).fmh(1.5).room(0.5).gain(0.5).slow(8)",
+      "piano": "note('<a3 c4 e4 a4 c5 e4 a4 e4>(7,8)').s('piano').room(0.35).gain(0.55)",
+      "cello": "note('<a2 ~ ~ ~ ~ ~ ~ ~ e2 ~ ~ ~ ~ ~ ~ ~>').s('sawtooth').lpf(600).room(0.4).gain(0.45).slow(2)"
+    },
+    "resolve": {
+      "rhythm": "silent",
+      "harmony": "chord('<Am>').voicing().s('sine').fm(2.01).fmh(1.5).room(0.55).gain(perlin.range(0.1,0.2)).slow(4)",
+      "piano": "note('<a3 c4 e4 a4>(3,8)').s('piano').room(0.4).gain(perlin.range(0.15,0.25)).slow(4)"
+    }
   },
+
+  "master": {
+    "compressor": true,
+    "limiter": true
+  },
+
   "progression": {
     "chords": ["i", "VI", "III", "VII", "iv", "V", "i", "i"],
     "scale": "natural_minor",
     "bars_per_chord": 2
   },
+
   "harmonic_system": {
     "type": "functional_tonal",
     "functions": {
@@ -104,12 +133,14 @@
       "reasoning": "V→i = authentic cadence (last meaningful motion before tonic pedal)"
     }
   },
+
   "arc": {
     "intro": { "layers": ["piano"], "velocity": 0.25 },
     "build": { "layers": ["piano", "strings"], "velocity": 0.4 },
     "climax": { "layers": ["piano", "strings", "cello"], "velocity": 0.6 },
     "resolve": { "layers": ["piano"], "velocity": 0.2 }
   },
+
   "orchestration_limits": {
     "intro": { "max_simultaneous_voices": 1 },
     "build": { "max_simultaneous_voices": 2 },
@@ -118,6 +149,7 @@
     "hard_limit": 6,
     "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
   },
+
   "form": {
     "type": "periodo_tematico",
     "phrases": [
@@ -129,24 +161,7 @@
       "resolve": "inversion_of_antecedent"
     }
   },
-  "rhythmGrid": {
-    "_doc": "16-step velocity arrays (16th notes, 4/4 bar). 0 = silence, 0.1-1.0 = hit velocity. Neo-classical: almost no percussion, rhythm comes from note placement.",
-    "intro": {
-      "piano": [0.25, 0, 0, 0, 0.2, 0, 0, 0, 0.22, 0, 0, 0, 0.18, 0, 0, 0]
-    },
-    "build": {
-      "piano":   [0.35, 0, 0.2, 0, 0.3, 0, 0.2, 0, 0.35, 0, 0.2, 0, 0.3, 0, 0.2, 0],
-      "strings": [0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    },
-    "climax": {
-      "piano":   [0.5, 0.2, 0.35, 0.2, 0.45, 0.2, 0.35, 0.2, 0.5, 0.2, 0.35, 0.2, 0.45, 0.2, 0.35, 0.2],
-      "strings": [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "cello":   [0.45, 0, 0, 0, 0, 0, 0, 0, 0.4, 0, 0, 0, 0, 0, 0, 0]
-    },
-    "resolve": {
-      "piano": [0.2, 0, 0, 0, 0.15, 0, 0, 0, 0.18, 0, 0, 0, 0.12, 0, 0, 0]
-    }
-  },
+
   "voiceLeading": {
     "_doc": "Key: Am. i=Am, VI=F, III=C, VII=G, iv=Dm, V=E",
     "chords": {
@@ -196,38 +211,22 @@
       "resolve": "spread"
     }
   },
-  "melodicPatterns": {
-    "piano": {
-      "intro": "slow_broken_chords_quarter_notes",
-      "build": "arpeggiated_eighths_ascending",
-      "climax": "full_chords_with_melodic_top_voice",
-      "resolve": "slow_broken_chords_descending"
-    },
-    "strings": {
-      "build": "sustained_pads_whole_notes",
-      "climax": "crescendo_sustained_with_vibrato"
-    },
-    "cello": {
-      "climax_only": true,
-      "climax": "lyrical_counter_melody_quarter_and_eighth_notes",
-      "phrases": ["A3", "C4", "B3", "A3", "E3", "F3", "G#3", "A3"]
-    }
-  },
+
   "transitions": {
     "intro_to_build": {
       "type": "fadeout",
       "bars_before": 1,
-      "implementation": "Piano increases note density from quarter notes to eighths over final 2 beats. Strings fade in with attack 3s, starting ppp. No rhythmic change, purely textural thickening."
+      "strudel": "note('<a3 c4 e4 a4>').s('piano').room(0.4).gain(perlin.range(0.25,0.4)).slow(2)"
     },
     "build_to_climax": {
       "type": "riser",
       "bars_before": 1,
-      "implementation": "Piano adds octave doubling in left hand. Strings crescendo from pp to mf over 4 beats. Cello enters with pickup note on beat 4 (G#3 leading to A3). Sustain pedal engaged (increase reverb wet to 0.5)."
+      "strudel": "stack(chord('Am').voicing().s('sine').fm(2.01).room(0.5).gain(perlin.range(0.3,0.5)).slow(2), note('<a3 c4 e4>').s('piano').gain(perlin.range(0.4,0.6)))"
     },
     "climax_to_resolve": {
       "type": "fadeout",
       "bars_before": 1,
-      "implementation": "Strings and cello diminuendo over 4 beats to silence. Piano thins from full chords to single-line melody, then to sparse broken chords. Reverb tail extends (decay 6s). Final bar piano alone, ritardando effect via increasing note spacing."
+      "strudel": "chord('Am').voicing().s('sine').fm(2.01).room(0.55).gain(perlin.range(0.15,0.3)).slow(4)"
     }
   }
 }

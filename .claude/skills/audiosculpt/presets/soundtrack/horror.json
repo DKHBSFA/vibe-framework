@@ -3,6 +3,51 @@
   "description": "Unsettling dissonant drones with sudden transients, chromatic clusters, and eerie spectral textures.",
   "family": "hybrid",
   "hybrid_families": ["modal", "experimental"],
+
+  "impact_frame": {
+    "enabled": true,
+    "duration_ms": 3000,
+    "layers": {
+      "0ms": {
+        "role": "attention_grabber",
+        "strudel": "stack(note('db1').s('sawtooth').fm(1.01).lpf(400).room(0.6).gain(0.9), s('white').struct('t').crush(6).lpf(2000).gain(0.7))"
+      },
+      "100ms": {
+        "role": "genre_signifier",
+        "strudel": "chord('Dbm').voicing().s('sawtooth').fm(1.01).fmh(3).lpf(800).room(0.6).gain(0.6)"
+      },
+      "500ms": {
+        "role": "hook_motif",
+        "strudel": "note('<db4 d4 db4 c4>').s('sine').delay(0.4).room(0.7).gain(0.55)"
+      }
+    }
+  },
+
+  "voiceover_mode": {
+    "enabled": false,
+    "layers": {
+      "sub_bed": {
+        "frequency_focus": "below_200hz",
+        "instruments": ["drone", "sub_bass"],
+        "gain": 0.8,
+        "filter": { "lpf": 200 }
+      },
+      "air_bed": {
+        "frequency_focus": "above_4000hz",
+        "instruments": ["eerie_texture", "whisper"],
+        "gain": 0.6,
+        "filter": { "hpf": 4000 }
+      },
+      "mid_punctuation": {
+        "frequency_focus": "200hz_4000hz",
+        "instruments": ["stinger", "cluster"],
+        "gain": 0.25,
+        "sparse": true,
+        "max_events_per_bar": 1
+      }
+    }
+  },
+
   "temporal": {
     "bpm": 80,
     "range": [40, 120],
@@ -15,132 +60,106 @@
       "maxTempoDeviationPercent": 5
     }
   },
+
   "key": "Db",
-  "instruments": {
+
+  "sounds": {
     "drone": {
-      "type": "FMSynth",
-      "config": {
-        "harmonicity": 1.01,
-        "modulationIndex": 3,
-        "oscillator": { "type": "sawtooth" },
-        "modulation": { "type": "sine" },
-        "envelope": { "attack": 4.0, "decay": 2.0, "sustain": 0.9, "release": 6.0 },
-        "modulationEnvelope": { "attack": 3.0, "decay": 1.0, "sustain": 0.8, "release": 5.0 }
-      },
-      "volume": -10,
-      "range": ["C1", "C3"],
-      "optimal_range": ["C1", "G2"],
-      "effects": [
-        { "type": "Reverb", "config": { "decay": 10.0, "wet": 0.6, "preDelay": 0.1 } },
-        { "type": "Filter", "config": { "frequency": 800, "type": "lowpass", "rolloff": -24 } }
-      ]
+      "source": "sawtooth",
+      "fm": 1.01,
+      "fmh": 3,
+      "lpf": 800,
+      "room": 0.6,
+      "gain": 0.6
     },
     "cluster": {
-      "type": "PolySynth",
-      "config": {
-        "voice": "FMSynth",
-        "maxPolyphony": 8,
-        "options": {
-          "harmonicity": 7.07,
-          "modulationIndex": 12,
-          "oscillator": { "type": "sine" },
-          "modulation": { "type": "square" },
-          "envelope": { "attack": 0.8, "decay": 0.5, "sustain": 0.6, "release": 3.0 },
-          "modulationEnvelope": { "attack": 0.5, "decay": 0.3, "sustain": 0.4, "release": 2.0 }
-        }
-      },
-      "volume": -16,
-      "range": ["C3", "C6"],
-      "optimal_range": ["C3", "C5"],
-      "effects": [
-        { "type": "Reverb", "config": { "decay": 7.0, "wet": 0.55 } },
-        { "type": "Chorus", "config": { "frequency": 0.15, "delayTime": 8, "depth": 0.8, "wet": 0.4 } }
-      ]
+      "source": "sine",
+      "fm": 7.07,
+      "fmh": 12,
+      "room": 0.55,
+      "gain": 0.5
     },
     "stinger": {
-      "type": "MetalSynth",
-      "config": {
-        "frequency": 150,
-        "envelope": { "attack": 0.001, "decay": 1.5, "release": 2.0 },
-        "harmonicity": 12,
-        "modulationIndex": 50,
-        "resonance": 2000,
-        "octaves": 3
-      },
-      "volume": -16,
-      "effects": [
-        { "type": "Reverb", "config": { "decay": 5.0, "wet": 0.5 } },
-        { "type": "Distortion", "config": { "distortion": 0.3, "wet": 0.3 } }
-      ]
+      "source": "metal",
+      "room": 0.5,
+      "gain": 0.7
     },
     "breath": {
-      "type": "NoiseSynth",
-      "config": {
-        "noise": { "type": "brown" },
-        "envelope": { "attack": 1.5, "decay": 2.0, "sustain": 0.3, "release": 3.0 }
-      },
-      "volume": -18,
-      "effects": [
-        { "type": "AutoFilter", "config": { "frequency": 0.05, "baseFrequency": 100, "octaves": 5, "wet": 0.8 } },
-        { "type": "Reverb", "config": { "decay": 8.0, "wet": 0.6 } }
-      ]
+      "source": "brown",
+      "lpf": "sine.range(100,500).slow(16)",
+      "room": 0.6,
+      "gain": 0.35
     },
     "heartbeat": {
-      "type": "MembraneSynth",
-      "config": {
-        "pitchDecay": 0.1,
-        "octaves": 3,
-        "oscillator": { "type": "sine" },
-        "envelope": { "attack": 0.01, "decay": 0.4, "sustain": 0.0, "release": 0.5 }
-      },
-      "volume": -14,
-      "effects": [
-        { "type": "Filter", "config": { "frequency": 200, "type": "lowpass", "rolloff": -24 } },
-        { "type": "Reverb", "config": { "decay": 3.0, "wet": 0.3 } }
-      ]
+      "source": "sine",
+      "lpf": 200,
+      "room": 0.3,
+      "gain": 0.6
     },
     "whisper": {
-      "type": "MonoSynth",
-      "config": {
-        "oscillator": { "type": "sine" },
-        "filter": { "Q": 12, "type": "bandpass", "rolloff": -24 },
-        "envelope": { "attack": 0.3, "decay": 0.2, "sustain": 0.4, "release": 2.0 },
-        "filterEnvelope": { "attack": 0.5, "decay": 0.8, "sustain": 0.2, "release": 1.5, "baseFrequency": 2000, "octaves": 3 }
-      },
-      "volume": -20,
-      "range": ["C4", "C7"],
-      "optimal_range": ["C5", "C6"],
-      "effects": [
-        { "type": "Vibrato", "config": { "frequency": 8, "depth": 0.4, "wet": 0.7 } },
-        { "type": "PingPongDelay", "config": { "delayTime": "4n.", "feedback": 0.35, "wet": 0.45 } },
-        { "type": "Reverb", "config": { "decay": 6.0, "wet": 0.6 } }
-      ]
+      "source": "sine",
+      "delay": 0.45,
+      "room": 0.6,
+      "gain": 0.4
     }
   },
-  "master": {
-    "effects": [
-      { "type": "EQ3", "config": { "low": 3, "mid": -2, "high": -3, "lowFrequency": 200, "highFrequency": 5000 } },
-      { "type": "Compressor", "config": { "threshold": -20, "ratio": 2, "attack": 0.1, "release": 0.5 } },
-      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
-        { "type": "Limiter", "config": { "threshold": -3 } }
-    ]
+
+  "patterns": {
+    "intro": {
+      "rhythm": "silent",
+      "harmony": "silent",
+      "drone": "note('db1').s('sawtooth').fm(1.01).fmh(3).lpf(800).room(0.6).gain(0.2).slow(8)",
+      "breath": "s('brown').struct('~ ~ ~ ~ ~ ~ ~ ~ t ~ ~ ~ ~ ~ ~ ~').lpf(sine.range(100,400).slow(16)).room(0.6).gain(0.15)"
+    },
+    "build": {
+      "rhythm": "silent",
+      "harmony": "silent",
+      "drone": "note('db1').s('sawtooth').fm(1.01).fmh(3).lpf(900).room(0.6).gain(0.35).slow(8)",
+      "breath": "s('brown').struct('~ ~ ~ ~ ~ ~ t ~ ~ ~ ~ ~ ~ ~ t ~').lpf(sine.range(100,500).slow(16)).room(0.6).gain(0.2)",
+      "heartbeat": "note('db1').s('sine').struct('t ~ ~ t/2 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~').lpf(200).room(0.3).gain(0.4).slow(2)",
+      "whisper": "note('<db5 d5 db5 ab4>').struct('~ ~ ~ ~ ~ ~ ~ ~ ~ ~ t ~ ~ ~ ~ ~').s('sine').delay(0.45).room(0.6).gain(0.25).slow(4)"
+    },
+    "climax": {
+      "rhythm": "s('metal').struct('t ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~').room(0.5).gain(0.8)",
+      "harmony": "silent",
+      "drone": "note('<db1 d1>').s('sawtooth').fm(1.01).fmh(5).lpf(1200).room(0.6).gain(0.7).slow(4)",
+      "cluster": "chord('<Db4/D4/Eb4/E4>').s('sine').fm(7.07).fmh(12).struct('~ ~ ~ ~ t ~ ~ ~ ~ ~ ~ t ~ ~ ~ ~').room(0.55).gain(0.5)",
+      "breath": "s('brown').struct('~ ~ t ~ ~ ~ ~ t ~ ~ ~ ~ t ~ ~ ~').lpf(sine.range(150,600).slow(8)).room(0.6).gain(0.3)",
+      "heartbeat": "note('db1').s('sine').struct('t ~ ~ t/2 ~ ~ ~ ~ t ~ ~ t/2 ~ ~ ~ ~').lpf(200).room(0.3).gain(sine.range(0.45,0.6))",
+      "whisper": "note('<db5 d5 e5 f5 gb5 g5 ab5>').struct('~ ~ ~ ~ ~ t ~ ~ ~ ~ ~ ~ ~ ~ t ~').s('sine').delay(0.45).room(0.6).gain(0.35).slow(2)"
+    },
+    "resolve": {
+      "rhythm": "silent",
+      "harmony": "silent",
+      "drone": "note('db1').s('sawtooth').fm(1.01).fmh(3).lpf(400).room(0.6).gain(perlin.range(0.1,0.2)).slow(8)",
+      "breath": "s('brown').struct('~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ t ~ ~ ~').lpf(sine.range(80,300).slow(16)).room(0.6).gain(0.1).slow(2)"
+    }
   },
+
+  "master": {
+    "compressor": true,
+    "limiter": true
+  },
+
   "progression": {
     "chords": ["i", "bII", "i", "bVII", "bVI", "bII", "v", "i"],
     "scale": "chromatic",
     "bars_per_chord": 2
   },
+
   "harmonic_system": {
     "type": "atonal_cluster",
     "field": "Db chromatic",
     "cadences": "none"
   },
+
   "arc": {
     "intro": { "layers": ["drone", "breath"], "velocity": 0.2 },
     "build": { "layers": ["drone", "breath", "heartbeat", "whisper"], "velocity": 0.4 },
     "climax": { "layers": ["drone", "cluster", "stinger", "breath", "heartbeat", "whisper"], "velocity": 0.85 },
     "resolve": { "layers": ["drone", "breath"], "velocity": 0.15 }
   },
+
   "orchestration_limits": {
     "intro": { "max_simultaneous_voices": 2 },
     "build": { "max_simultaneous_voices": 4 },
@@ -149,35 +168,12 @@
     "hard_limit": 8,
     "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
   },
+
   "form": {
     "type": "atematico",
     "density_per_phase": { "intro": 0.1, "build": 0.4, "climax": 0.9, "resolve": 0.1 }
   },
-  "rhythmGrid": {
-    "_doc": "16-step velocity arrays (16th notes, 4/4 bar). 0 = silence, 0.1-1.0 = hit velocity. Horror: sparse, irregular, unsettling. Long silences punctuated by sudden impacts.",
-    "intro": {
-      "drone":  [0.2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "breath": [0, 0, 0, 0, 0, 0, 0, 0, 0.15, 0, 0, 0, 0, 0, 0, 0]
-    },
-    "build": {
-      "drone":     [0.35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "breath":    [0, 0, 0, 0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 0.15, 0],
-      "heartbeat": [0.4, 0, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "whisper":   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.25, 0, 0, 0, 0, 0]
-    },
-    "climax": {
-      "drone":     [0.7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "cluster":   [0, 0, 0, 0, 0.6, 0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0],
-      "stinger":   [0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "breath":    [0, 0, 0.3, 0, 0, 0, 0, 0.25, 0, 0, 0, 0, 0.3, 0, 0, 0],
-      "heartbeat": [0.6, 0, 0, 0.5, 0, 0, 0, 0, 0.55, 0, 0, 0.45, 0, 0, 0, 0],
-      "whisper":   [0, 0, 0, 0, 0, 0.35, 0, 0, 0, 0, 0, 0, 0, 0, 0.3, 0]
-    },
-    "resolve": {
-      "drone":  [0.15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      "breath": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0, 0, 0]
-    }
-  },
+
   "voiceLeading": {
     "_doc": "Key: Db chromatic. i=Dbm, bII=D(maj), bVII=B(maj), bVI=A(maj), v=Abm. Dissonant voicings with minor 2nds and tritones.",
     "chords": {
@@ -223,45 +219,22 @@
       "resolve": "spread"
     }
   },
-  "melodicPatterns": {
-    "drone": {
-      "intro": "sustained_single_note_with_slow_detune",
-      "build": "sustained_with_lfo_pitch_wobble_0.5hz",
-      "climax": "sustained_cluster_minor_2nd_apart",
-      "resolve": "sustained_single_note_fadeout"
-    },
-    "whisper": {
-      "climax_only": false,
-      "build": "sparse_chromatic_fragments_random_interval",
-      "climax": "rapid_chromatic_runs_ascending",
-      "phrases_build": ["Db5", "D5", "Db5", "Ab4"],
-      "phrases_climax": ["Db5", "D5", "E5", "F5", "Gb5", "G5", "Ab5"]
-    },
-    "cluster": {
-      "climax_only": true,
-      "climax": "stacked_minor_2nds_tremolo",
-      "voicing": ["Db4", "D4", "Eb4", "E4"]
-    },
-    "heartbeat": {
-      "build": "double_pulse_long_silence",
-      "climax": "accelerating_double_pulse"
-    }
-  },
+
   "transitions": {
     "intro_to_build": {
       "type": "riser",
       "bars_before": 1,
-      "implementation": "Drone filter frequency slowly opens from 800→1200Hz over 4 beats. Heartbeat enters with single hit on beat 1, second hit on beat 1.5 (double-pulse pattern). Whisper enters ppp with single chromatic grace note. Breath shifts to irregular pattern."
+      "strudel": "stack(note('db1').s('sawtooth').fm(1.01).lpf(sine.range(800,1200)).room(0.6).gain(perlin.range(0.2,0.35)).slow(4), note('db1').s('sine').lpf(200).gain(0.3))"
     },
     "build_to_climax": {
       "type": "riser",
       "bars_before": 1,
-      "implementation": "Heartbeat rate doubles (quarter→eighth pulse spacing). Drone modulationIndex ramps 3→8 over 4 beats creating increasing dissonance. Stinger hits fff on beat 1 of climax (metallic crash). Cluster enters simultaneously with tremolo. Whisper switches to rapid chromatic runs."
+      "strudel": "stack(note('db1').s('sawtooth').fm(perlin.range(3,8)).room(0.6).gain(perlin.range(0.4,0.7)).slow(2), s('metal').struct('~ ~ ~ ~ ~ ~ ~ t').room(0.5).gain(0.9))"
     },
     "climax_to_resolve": {
       "type": "drop",
       "bars_before": 0.5,
-      "implementation": "All instruments except drone and breath cut instantly on beat 1 (sudden silence = most unsettling). Drone filter slams back to 400Hz. Breath volume drops to -24dB. 2 beats of near-silence, then drone slowly re-emerges at 0.15 velocity. Final breath swell on last beat."
+      "strudel": "note('db1').s('sawtooth').fm(1.01).lpf(400).room(0.6).gain(perlin.range(0.1,0.2)).slow(4)"
     }
   }
 }
