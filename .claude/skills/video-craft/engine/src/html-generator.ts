@@ -5,7 +5,7 @@
 import type { Timeline, TimelineScene, TimelineElement } from './timeline.js';
 import type { Config } from './config.js';
 import { FORMAT_PRESETS } from './presets.js';
-import type { AnimationDef } from './actions.js';
+import { type AnimationDef, ENTRANCES, EXITS } from './actions.js';
 import type { DesignTokens } from './ux-bridge.js';
 import {
   getLayoutProfile, autoSelectLayout, computeCardGridColumns, computeEffectiveCardMaxWidth,
@@ -36,6 +36,24 @@ export function generateHTML(
       addKeyframes(el.entranceId, el.entranceDef.keyframes, keyframesSet, keyframesCss);
       if (el.exitId && el.exitDef) {
         addKeyframes(el.exitId, el.exitDef.keyframes, keyframesSet, keyframesCss);
+      }
+      // Collect keyframes for multi-phase elements
+      const phases = el.element.phases;
+      if (phases && phases.length > 0) {
+        // Always need fade-out for phase exits (used in generateMultiPhaseHTML)
+        const fadeOutDef = EXITS['fade-out'];
+        if (fadeOutDef) {
+          addKeyframes('fade-out', fadeOutDef.keyframes, keyframesSet, keyframesCss);
+        }
+        // Collect phase-specific entrance keyframes
+        for (const phase of phases) {
+          if (phase.entrance) {
+            const phaseDef = ENTRANCES[phase.entrance];
+            if (phaseDef) {
+              addKeyframes(phase.entrance, phaseDef.keyframes, keyframesSet, keyframesCss);
+            }
+          }
+        }
       }
     }
     if (scene.transitionOut) {
@@ -143,8 +161,13 @@ body {
 }
 
 @keyframes scene-reveal {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; visibility: visible; }
+  to { opacity: 1; visibility: visible; }
+}
+
+@keyframes scene-hide {
+  from { opacity: 1; visibility: visible; }
+  to { opacity: 0; visibility: hidden; }
 }
 
 /* ═══════════════════════════════════════════
@@ -325,7 +348,7 @@ body {
 .el-text {
   font-size: ${p.textSize}px;
   line-height: ${p.textLineHeight};
-  opacity: 0.85;
+  opacity: 1;  /* Full opacity for better contrast (WCAG compliance) */
   max-width: ${isVert ? '95%' : '80%'};
   overflow: hidden;
   display: -webkit-box;
@@ -370,7 +393,7 @@ ${namedColors.length > 0 ? namedColors.map((c, i) => `.el-card:nth-child(${named
 
 .el-card .card-icon { font-size: ${p.cardIconSize}px; margin-bottom: 12px; }
 .el-card .card-title { font-size: ${p.cardTitleSize}px; font-weight: 700; margin-bottom: 8px; }
-.el-card .card-text { font-size: ${p.cardTextSize}px; opacity: 0.8; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.el-card .card-text { font-size: ${p.cardTextSize}px; opacity: 1; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 
 .el-divider {
   width: ${p.dividerWidth}px;
@@ -565,7 +588,7 @@ function generateSceneHTML(
   // controlled by DOM order + the scene-reveal animation timing
   const zIndex = '';
 
-  // Extract animation value from bgAnimCSS and combine with scene-reveal
+  // Extract animation value from bgAnimCSS and combine with scene-reveal/hide
   // to avoid one overwriting the other
   const bgAnimMatch = bgAnimCSS.match(/animation:\s*([^;]+);/);
   const bgAnimValue = bgAnimMatch?.[1]?.trim() ?? '';
@@ -573,7 +596,20 @@ function generateSceneHTML(
   const sceneRevealValue = scene.sceneIndex === 0
     ? ''
     : `scene-reveal 100ms ease ${scene.startMs}ms both`;
-  const animParts = [bgAnimValue, sceneRevealValue].filter(Boolean);
+
+  // Add scene-hide animation to ensure previous scene hides before next appears
+  // Cocomelon mode: instant switch (0 overlap) to prevent stacking on fast scenes
+  // Other modes: proportional overlap (3% of duration, 50-150ms range)
+  const totalScenes = config.scenes?.length ?? 1;
+  const isLastScene = scene.sceneIndex >= totalScenes - 1;
+  const isCocomelon = config.video?.mode === 'cocomelon';
+  const overlapMs = isCocomelon ? 0 : Math.max(50, Math.min(150, Math.round(scene.durationMs * 0.03)));
+  const hideDelay = scene.startMs + scene.durationMs - overlapMs;
+  const sceneHideValue = isLastScene
+    ? ''
+    : `scene-hide ${overlapMs}ms ease ${hideDelay}ms forwards`;
+
+  const animParts = [bgAnimValue, sceneRevealValue, sceneHideValue].filter(Boolean);
   const combinedAnim = animParts.length > 0
     ? `animation: ${animParts.join(', ')};`
     : '';
@@ -785,19 +821,21 @@ function generateMultiPhaseHTML(
     const enterTime = cursor + phaseDelay;
     // Default hold: 1500ms per phase unless it's the last phase
     const holdTime = pi < phases.length - 1 ? 1500 : 0;
+    const exitDuration = 300;
     const exitTime = enterTime + phaseDur + holdTime;
 
     let animParts = `${phaseEntrance} ${phaseDur}ms ${easing} ${enterTime}ms both`;
     if (pi < phases.length - 1) {
       // Exit before next phase
-      animParts += `, fade-out ${300}ms ${easing} ${exitTime}ms forwards`;
+      animParts += `, fade-out ${exitDuration}ms ${easing} ${exitTime}ms forwards`;
     }
 
     phaseDivs.push(
       `<div class="el el-heading size-${phaseSize}" style="position:absolute;animation:${animParts};${extraStyle}">${escapeHtml(phaseText)}</div>`
     );
 
-    cursor = exitTime;
+    // Wait for fade-out to complete + buffer before next phase starts
+    cursor = exitTime + (pi < phases.length - 1 ? exitDuration + 100 : 0);
   }
 
   // Wrap in a relative container
