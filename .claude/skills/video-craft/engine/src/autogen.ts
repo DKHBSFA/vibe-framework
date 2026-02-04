@@ -28,6 +28,7 @@ export interface AutogenOptions {
   codec?: string;
   fps?: number;
   designTokens?: DesignTokens;
+  output?: string;  // Optional output path (default: './output/video.mp4')
 }
 
 interface SceneDef {
@@ -67,6 +68,7 @@ interface ContentCursor {
   featureIdx: number;
   sectionIdx: number;
   headingIdx: number;
+  usedSections: Set<number>;  // Track used section indices to avoid reuse
 }
 
 function nextFeatures(content: ExtractedContent, cursor: ContentCursor, max: number): string[] {
@@ -76,8 +78,13 @@ function nextFeatures(content: ExtractedContent, cursor: ContentCursor, max: num
 }
 
 function nextSection(content: ExtractedContent, cursor: ContentCursor): { title: string; body: string } | null {
-  if (cursor.sectionIdx >= content.sections.length) return null;
-  return content.sections[cursor.sectionIdx++];
+  // Find next unused section
+  for (let i = 0; i < content.sections.length; i++) {
+    if (cursor.usedSections.has(i)) continue;
+    cursor.usedSections.add(i);
+    return content.sections[i];
+  }
+  return null;
 }
 
 function nextHeading(content: ExtractedContent, cursor: ContentCursor): string | null {
@@ -90,17 +97,60 @@ function nextHeading(content: ExtractedContent, cursor: ContentCursor): string |
 /** Match a real metric pattern: "100+", "50%", "2x faster", "10K users", etc. */
 const METRIC_PATTERN = /\b\d+[\d,.]*\s*[%xX+]|\b\d+[KkMmBb]\+?\b|\b\d+[\d,.]*\s*(?:faster|users|teams|customers|downloads|stars|projects|hours|minutes|seconds)\b/;
 
-/** Find the best section matching keywords for a scene type */
+/** Keywords that indicate a section contains narrative content (not feature lists) */
+const NARRATIVE_KEYWORDS = [
+  'problem', 'challenge', 'old way', 'before', 'story',
+  'spark', 'beginning', 'journey', 'leap', 'revolution',
+  'founders', 'team', 'mission', 'vision', 'origin',
+  'struggle', 'pain', 'issue', 'bottleneck', 'limitation',
+];
+
+/**
+ * Find a section that represents narrative content (stories, problems, origin).
+ * These sections should be displayed as text, not converted to feature cards.
+ * Uses usedSections set to track consumption without mutating source arrays.
+ */
+function findNarrativeSection(
+  content: ExtractedContent,
+  cursor: ContentCursor,
+): { title: string; body: string } | null {
+  for (let i = 0; i < content.sections.length; i++) {
+    // Skip already-used sections
+    if (cursor.usedSections.has(i)) continue;
+
+    const s = content.sections[i];
+    const titleLower = s.title.toLowerCase();
+
+    // Check if this section's title matches narrative patterns
+    if (NARRATIVE_KEYWORDS.some(kw => titleLower.includes(kw))) {
+      // Skip if body looks like a feature list (many short comma-separated items)
+      const commaCount = (s.body.match(/,/g) || []).length;
+      if (commaCount > 3 && s.body.length < 100) continue;
+
+      // Mark as used (no array mutation)
+      cursor.usedSections.add(i);
+      return s;
+    }
+  }
+  return null;
+}
+
+/** Find the best section matching keywords for a scene type.
+ * Uses usedSections set to track consumption without mutating source arrays.
+ */
 function findBestSection(
   content: ExtractedContent,
   cursor: ContentCursor,
   keywords: string[],
 ): { title: string; body: string } | null {
-  // Score remaining sections by keyword relevance
+  // Score all unused sections by keyword relevance
   let bestIdx = -1;
   let bestScore = 0;
 
-  for (let i = cursor.sectionIdx; i < content.sections.length; i++) {
+  for (let i = 0; i < content.sections.length; i++) {
+    // Skip already-used sections
+    if (cursor.usedSections.has(i)) continue;
+
     const s = content.sections[i];
     const lower = (s.title + ' ' + s.body).toLowerCase();
     let score = 0;
@@ -115,16 +165,12 @@ function findBestSection(
 
   if (bestIdx >= 0 && bestScore > 0) {
     const section = content.sections[bestIdx];
-    // Swap found section to cursor position so we don't skip others
-    if (bestIdx !== cursor.sectionIdx) {
-      [content.sections[cursor.sectionIdx], content.sections[bestIdx]] =
-        [content.sections[bestIdx], content.sections[cursor.sectionIdx]];
-    }
-    cursor.sectionIdx++;
+    // Mark as used (no array mutation)
+    cursor.usedSections.add(bestIdx);
     return section;
   }
 
-  // Fallback to linear
+  // Fallback to linear (next unused section)
   return nextSection(content, cursor);
 }
 
@@ -185,6 +231,16 @@ function buildElements(
     }
 
     case 'feature-showcase': {
+      // FIRST: Check for narrative sections (problem statements, origin stories, etc.)
+      // These should be displayed as text, not converted to feature cards
+      const narrativeSection = findNarrativeSection(content, cursor);
+      if (narrativeSection) {
+        els.push({ type: 'heading', text: truncate(narrativeSection.title, 120), size: 'lg' });
+        els.push({ type: 'text', text: truncate(narrativeSection.body, 250) });
+        break;
+      }
+
+      // No narrative section found - use features as cards
       const maxItems = Math.min(density.max - 1, 4); // -1 for heading, cap at 4 to prevent vertical overflow
       const features = nextFeatures(content, cursor, maxItems);
       if (features.length === 0) {
@@ -198,8 +254,11 @@ function buildElements(
         }
       } else if (features.length >= 3) {
         // Use a relevant section title if available, otherwise generic
+        // IMPORTANT: Don't use problem/challenge sections as headers for feature cards
         const sectionTitle = findBestSection(content, cursor, ['feature', 'capability', 'what', 'highlight', 'power']);
-        els.push({ type: 'heading', text: sectionTitle?.title || 'Key Features', size: 'lg' });
+        const isProblemTitle = sectionTitle?.title &&
+          NARRATIVE_KEYWORDS.some(kw => sectionTitle.title.toLowerCase().includes(kw));
+        els.push({ type: 'heading', text: isProblemTitle ? 'Key Features' : (sectionTitle?.title || 'Key Features'), size: 'lg' });
         els.push({
           type: 'card-group',
           items: features.map(f => ({ title: truncate(f, 80) })),
@@ -213,7 +272,7 @@ function buildElements(
     }
 
     case 'before-after': {
-      const section = findBestSection(content, cursor, ['before', 'after', 'transform', 'change', 'improve', 'result']);
+      const section = findBestSection(content, cursor, ['before', 'after', 'old', 'transform', 'change', 'improve', 'result', 'way']);
       els.push({ type: 'heading', text: section?.title || 'The Transformation', size: 'lg' });
       // Before block
       if (section?.body) {
@@ -364,7 +423,7 @@ export function generateConfig(content: ExtractedContent, options: AutogenOption
   // 2. Build scenes from pattern
   const scenes: SceneDef[] = [];
   const usedSceneTypes = new Set<SceneTypeId>();
-  const cursor: ContentCursor = { featureIdx: 0, sectionIdx: 0, headingIdx: 0 };
+  const cursor: ContentCursor = { featureIdx: 0, sectionIdx: 0, headingIdx: 0, usedSections: new Set() };
   const resolvedSceneTypes: SceneTypeId[] = [];
 
   // Resolve all slots first
@@ -409,6 +468,7 @@ export function generateConfig(content: ExtractedContent, options: AutogenOption
 
   // Build each scene
   const totalScenes = resolvedSceneTypes.length;
+  const usedSceneNames = new Set<string>();
   for (let i = 0; i < totalScenes; i++) {
     const sceneTypeId = resolvedSceneTypes[i];
     const st = SCENE_TYPES[sceneTypeId];
@@ -459,7 +519,7 @@ export function generateConfig(content: ExtractedContent, options: AutogenOption
     const background = selectBackground(st, colors, i, totalScenes, mode, useTokens);
 
     const scene: SceneDef = {
-      name: sceneNameFromElements(elements, sceneTypeId, i),
+      name: sceneNameFromElements(elements, sceneTypeId, i, usedSceneNames),
       background,
       elements,
       sceneTypeId,
@@ -542,7 +602,7 @@ export function generateConfig(content: ExtractedContent, options: AutogenOption
       codec: (options.codec ?? 'h265') as 'h264' | 'h265' | 'av1',
       mode: options.mode,
       speed: options.speed,
-      output: './output/video.mp4',
+      output: options.output ?? './output/video.mp4',
     },
     'design-system': options.designTokens ? '.ui-craft/system.md' : undefined,
     scenes: scenes as SceneConfig[],
@@ -582,26 +642,65 @@ function truncate(text: string, max: number): string {
 }
 
 /** Derive scene name from actual content (called AFTER content recycling) */
-function sceneNameFromElements(elements: ElementDef[], sceneTypeId: SceneTypeId, index: number): string {
+function sceneNameFromElements(
+  elements: ElementDef[],
+  sceneTypeId: SceneTypeId,
+  index: number,
+  usedNames: Set<string>,
+): string {
   // Try to use the first heading's text as scene name
   const heading = elements.find(e => e.type === 'heading');
+  let baseName: string | undefined;
+
   if (heading?.text && !GENERIC_TEXTS.has(heading.text)) {
-    return truncate(heading.text, 40);
+    baseName = truncate(heading.text, 40);
   }
-  // Fallback to scene-type names
-  const names: Record<SceneTypeId, string> = {
-    'stat-callout': 'Key Stat',
-    'problem-statement': 'The Challenge',
-    'product-intro': 'Introducing',
-    'feature-showcase': 'Features',
-    'before-after': 'The Transformation',
-    'integration-hub': 'Built With',
-    'social-proof': 'Social Proof',
-    'cta-outro': 'CTA',
-    'rapid-text': 'Hook',
-    'data-visualization': 'Insights',
-    'sequential-product-parade': 'Our Solutions',
-  };
-  const base = names[sceneTypeId] ?? 'Scene';
-  return index === 0 ? base : `${base} ${index + 1}`;
+
+  // Try text element content (first sentence or phrase)
+  if (!baseName) {
+    const textEl = elements.find(e => e.type === 'text');
+    if (textEl?.text && textEl.text.length >= 10 && textEl.text.length < 150) {
+      const phrase = textEl.text.split(/[.!?]/)[0].trim();
+      if (phrase.length >= 5 && phrase.length < 50) {
+        baseName = truncate(phrase, 40);
+      }
+    }
+  }
+
+  // Try first card title from card-group
+  if (!baseName) {
+    const cardGroup = elements.find(e => e.type === 'card-group');
+    if (cardGroup?.items?.[0]?.title) {
+      baseName = `${truncate(cardGroup.items[0].title, 30)} & more`;
+    }
+  }
+
+  // Final fallback to scene-type names
+  if (!baseName) {
+    const names: Record<SceneTypeId, string> = {
+      'stat-callout': 'Key Stat',
+      'problem-statement': 'The Challenge',
+      'product-intro': 'Introducing',
+      'feature-showcase': 'Features',
+      'before-after': 'The Transformation',
+      'integration-hub': 'Built With',
+      'social-proof': 'Social Proof',
+      'cta-outro': 'CTA',
+      'rapid-text': 'Hook',
+      'data-visualization': 'Insights',
+      'sequential-product-parade': 'Our Solutions',
+    };
+    baseName = names[sceneTypeId] ?? 'Scene';
+    if (index > 0) baseName = `${baseName} ${index + 1}`;
+  }
+
+  // Ensure unique name
+  let finalName = baseName;
+  let counter = 2;
+  while (usedNames.has(finalName)) {
+    finalName = `${baseName} (${counter})`;
+    counter++;
+  }
+  usedNames.add(finalName);
+  return finalName;
 }

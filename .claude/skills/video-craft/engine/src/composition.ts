@@ -580,9 +580,15 @@ export function selectBackground(
   mode: ModeId,
   useTokens: boolean = false,
 ): string {
+  // When using design tokens, avoid 'light' backgrounds because --color-text
+  // is typically light (for dark themes) and would create zero contrast.
+  // Design tokens define a single text color that can't adapt per-scene.
+  const safeHints: BackgroundHint[] = useTokens
+    ? ['dark', 'dark-glow', 'brand-bold', 'gradient', 'dark-grid']
+    : ['dark', 'dark-glow', 'light', 'brand-bold', 'gradient', 'dark-grid'];
+
   if (mode === 'chaos') {
-    const hints: BackgroundHint[] = ['dark', 'dark-glow', 'light', 'brand-bold', 'gradient', 'dark-grid'];
-    return generateBackground(pickRandom(hints), colors, useTokens);
+    return generateBackground(pickRandom(safeHints), colors, useTokens);
   }
 
   if (mode === 'cocomelon') {
@@ -591,7 +597,9 @@ export function selectBackground(
   }
 
   if (mode === 'hybrid' && Math.random() < 0.15) {
-    const surpriseHints: BackgroundHint[] = ['gradient', 'light', 'brand-bold'];
+    const surpriseHints: BackgroundHint[] = useTokens
+      ? ['gradient', 'brand-bold']
+      : ['gradient', 'light', 'brand-bold'];
     return generateBackground(pickRandom(surpriseHints), colors, useTokens);
   }
 
