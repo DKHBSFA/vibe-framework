@@ -809,6 +809,31 @@ export const TRANSITIONS: Record<string, TransitionDef> = {
     sceneAKeyframes: `from { transform: scale(1); opacity: 1; } to { transform: scale(0.8); opacity: 0; filter: blur(5px); }`,
     sceneBKeyframes: `from { transform: scale(1.2); opacity: 0; filter: blur(5px); } to { transform: scale(1); opacity: 1; filter: blur(0); }`,
   },
+  // ─── MORPH TRANSITIONS (shared-element feel) ──────────────
+  'morph-layout': {
+    id: 'morph-layout', name: 'Morph Layout', energy: 'medium',
+    durationRange: [500, 900],
+    sceneAKeyframes: `0% { transform: scale(1); opacity: 1; } 40% { transform: scale(0.95); opacity: 0.8; } 100% { transform: scale(0.9) translateY(-3%); opacity: 0; }`,
+    sceneBKeyframes: `0% { transform: scale(1.1) translateY(3%); opacity: 0; } 60% { transform: scale(1.02); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; }`,
+  },
+  'shared-element': {
+    id: 'shared-element', name: 'Shared Element', energy: 'medium',
+    durationRange: [600, 1000],
+    sceneAKeyframes: `0% { transform: scale(1); opacity: 1; filter: blur(0); } 50% { transform: scale(0.98); opacity: 0.6; filter: blur(2px); } 100% { transform: scale(0.95); opacity: 0; filter: blur(4px); }`,
+    sceneBKeyframes: `0% { transform: scale(1.05); opacity: 0; filter: blur(4px); } 50% { transform: scale(1.02); opacity: 0.6; filter: blur(2px); } 100% { transform: scale(1); opacity: 1; filter: blur(0); }`,
+  },
+  'cross-dissolve': {
+    id: 'cross-dissolve', name: 'Cross Dissolve', energy: 'low',
+    durationRange: [400, 900],
+    sceneAKeyframes: `0% { opacity: 1; filter: brightness(1); } 50% { opacity: 0.5; filter: brightness(1.2); } 100% { opacity: 0; filter: brightness(1); }`,
+    sceneBKeyframes: `0% { opacity: 0; filter: brightness(1.2); } 50% { opacity: 0.5; filter: brightness(1.1); } 100% { opacity: 1; filter: brightness(1); }`,
+  },
+  'morph-scale-shift': {
+    id: 'morph-scale-shift', name: 'Morph Scale Shift', energy: 'medium',
+    durationRange: [500, 900],
+    sceneAKeyframes: `0% { transform: scale(1) translateX(0); opacity: 1; } 100% { transform: scale(0.85) translateX(-5%); opacity: 0; }`,
+    sceneBKeyframes: `0% { transform: scale(1.15) translateX(5%); opacity: 0; } 100% { transform: scale(1) translateX(0); opacity: 1; }`,
+  },
 };
 
 // ─── EMPHASIS (attention-getters for already-visible elements) ──

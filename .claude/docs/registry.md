@@ -1,6 +1,6 @@
 # Codebase Registry
 
-**Last updated:** 2026-02-11
+**Last updated:** 2026-02-12
 
 This is my memory. I update it as I learn. I check it before making claims.
 
@@ -14,7 +14,7 @@ This is my memory. I update it as I learn. I check it before making claims.
 | seurat | `.claude/skills/seurat/` | UI design system generation, wireframing, page layout. Comandi: `/seurat setup`, `/seurat extract`, `/seurat build`, `/seurat audit`, `/seurat compliance`, `/seurat migrate`, `/seurat analyze-project`. 11 stili, 6 archetipi pagina, visual QA |
 | heimdall | `.claude/skills/heimdall/` | AI-specific security analysis. Comandi: `/heimdall scan`, `/heimdall audit`, `/heimdall secrets`, `/heimdall baas`, `/heimdall report` (markdown/json/sarif). OWASP Top 10, diff-aware analysis, import checking (2000+ pkg), iteration tracking, hook integration |
 | ghostwriter | `.claude/skills/ghostwriter/` | SEO + GEO optimization, persuasive copywriting. Comandi: `/ghostwriter write`, `/ghostwriter audit`, `/ghostwriter research`, `/ghostwriter optimize`, `/ghostwriter schema`, `/ghostwriter persona`, `/ghostwriter pillar-cluster`, `/ghostwriter meta`, `/ghostwriter llms-txt`, `/ghostwriter robots`. 50 regole validazione |
-| orson | `.claude/skills/orson/` | Video + audio production. Comandi: `/orson create`, `/orson render`, `/orson demo`, `/orson formats`, `/orson entrances`. 132 animazioni, 13 director recipes, 4 modi (safe/chaos/hybrid/cocomelon). Audio integrato: track selection, mixing, TTS narration, ducking. Demo mode: Playwright recording con zoom, cursor animato, narrazione, sottotitoli. Integrazione seurat + ghostwriter |
+| orson | `.claude/skills/orson/` | Video + audio production. Comandi: `/orson create`, `/orson render` (`--draft`/`--parallel`/`--no-audio`), `/orson demo`, `/orson batch`, `/orson formats`, `/orson entrances`. 136+ animazioni (incl. morph transitions), 13 director recipes, 4 modi (safe/chaos/hybrid/cocomelon). v2: JPEG capture, HW encoding (NVENC/VA-API/VideoToolbox), draft mode (4-8x), parallel render, batch mode, asset embedding (base64), PiP video-in-video, SRT/VTT subtitles, advanced typography (variable fonts, text-wrap balance). Audio integrato: track selection, mixing, TTS narration, ducking. Demo mode: Playwright recording con zoom, cursor animato, narrazione, sottotitoli. Integrazione seurat + ghostwriter |
 | baptist | `.claude/skills/baptist/` | CRO orchestrator: Fogg B=MAP, audit 7 dimensioni, A/B test design, funnel analysis. Comandi: `/baptist audit`, `/baptist test`, `/baptist funnel`, `/baptist report`, `/baptist analyze`. Delega copy a Ghostwriter, UI a Seurat |
 | scribe | `.claude/skills/scribe/` | Document creation: xlsx, docx, pptx, pdf. Routing automatico per tipo file. OOXML editing workflow, scripts black-box (recalc, pack/unpack/validate, thumbnail). Integrazione Ghostwriter + Seurat |
 | forge | `.claude/skills/forge/` | Meta-skill: creazione, manutenzione, miglioramento skill. Comandi: `/forge create`, `/forge audit` (semantico + quantitativo), `/forge fix`. Trimming methodology, progressive disclosure, quality checklist. Budget: SKILL.md < 3000 parole |
@@ -33,6 +33,11 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 | Function | Location | Lines | What it does |
 |----------|----------|-------|--------------|
+| detectHardwareEncoder | orson/engine/src/encode.ts | - | Probes FFmpeg for NVENC/VA-API/VideoToolbox HW encoders |
+| renderParallel | orson/engine/src/parallel-render.ts | - | Renders scenes in parallel Playwright workers then concat |
+| generateSRT / generateVTT | orson/engine/src/subtitles.ts | - | Generates SRT/VTT subtitle files from scene timings |
+| runBatch | orson/engine/src/batch.ts | - | Batch renders N video variants from template + variables |
+| embedAsDataURI | orson/engine/src/asset-embed.ts | - | Converts local images to base64 data URIs for self-contained HTML |
 | | | | |
 
 ---

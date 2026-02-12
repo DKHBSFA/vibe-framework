@@ -82,6 +82,51 @@ export const INTER_ELEMENT_GAP: Record<SpeedPreset, number> = {
   instant: 0,
 };
 
+// ─── Draft Overrides ──────────────────────────────────────────
+// Used with --draft flag for fast preview renders (~4-8x speedup)
+
+export const DRAFT_OVERRIDES = {
+  widthDivisor: 2,    // 1920→960, 1080→540
+  heightDivisor: 2,
+  fps: 15,            // half the frame count
+  codec: {
+    encoder: 'libx264',
+    preset: 'ultrafast',
+    crf: 28,
+    pixFmt: 'yuv420p',
+    extraArgs: [] as string[],
+    container: 'mp4',
+  } satisfies CodecPreset,
+};
+
+// ─── Hardware Acceleration Presets ─────────────────────────────
+
+export type HwAccelId = 'nvenc' | 'vaapi' | 'videotoolbox';
+
+export interface HwAccelPreset {
+  encoder: string;
+  extraArgs: string[];
+  quality: string;
+}
+
+export const HW_ACCEL_PRESETS: Record<HwAccelId, HwAccelPreset> = {
+  nvenc: {
+    encoder: 'h264_nvenc',
+    extraArgs: ['-rc', 'constqp', '-qp', '18', '-b:v', '0'],
+    quality: '18',
+  },
+  vaapi: {
+    encoder: 'h264_vaapi',
+    extraArgs: ['-vaapi_device', '/dev/dri/renderD128', '-qp', '18'],
+    quality: '18',
+  },
+  videotoolbox: {
+    encoder: 'h264_videotoolbox',
+    extraArgs: ['-q:v', '65'],
+    quality: '65',
+  },
+};
+
 export type ModeId = 'safe' | 'chaos' | 'hybrid';
 
 export const SAFE_EASINGS = [

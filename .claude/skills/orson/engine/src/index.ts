@@ -6,7 +6,7 @@ import { readFileSync, mkdirSync, existsSync } from 'fs';
 import { initCapture, captureFrames, closeCapture } from './capture.js';
 import { startEncoder } from './encode.js';
 import { readDesignTokens } from './ux-bridge.js';
-import { FORMAT_PRESETS } from './presets.js';
+import { FORMAT_PRESETS, DRAFT_OVERRIDES } from './presets.js';
 import type { CodecId } from './presets.js';
 import { analyzeFolder } from './analyze-folder.js';
 import { analyzeUrl } from './analyze-url.js';
@@ -15,6 +15,7 @@ import { parseHTMLFile, type HTMLConfig } from './html-parser.js';
 import { computeSceneTiming, type ElementTimingInput } from './timing.js';
 import { selectTrack, type VideoMeta } from './audio-selector.js';
 import { trimAndLoop, fadeInOut, mergeAudioVideo } from './audio-mixer.js';
+import { generateSRT, generateVTT } from './subtitles.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -27,10 +28,13 @@ async function main() {
 Commands:
   render <file.html>        Render video from HTML config
   render <file.html> --no-audio  Render video without audio
+  render <file.html> --draft     Fast preview (half res, 15fps, ultrafast)
+  render <file.html> --parallel  Render scenes in parallel (multi-core)
   demo <script.json>        Record demo video from script
   analyze-folder <path>     Analyze project folder, output extracted content as JSON
   analyze-url <url>         Analyze URL, output extracted content as JSON
   autogen <json> [options]  Generate HTML from extracted content JSON
+  batch <config.json>       Batch render variants from template + variables
   formats                   List format presets
   entrances                 List available entrances
 `);
@@ -110,8 +114,24 @@ Commands:
 
   if (command === 'render') {
     const noAudio = args.includes('--no-audio');
+    const draft = args.includes('--draft');
+    const parallel = args.includes('--parallel');
     const htmlConfig = parseHTMLFile(fullPath);
-    await renderHTML(htmlConfig, fullPath, noAudio);
+    await renderHTML(htmlConfig, fullPath, noAudio, draft, parallel);
+    return;
+  }
+
+  if (command === 'batch') {
+    const { parseBatchConfig, runBatch } = await import('./batch.js');
+    const config = parseBatchConfig(fullPath);
+    const noAudio = args.includes('--no-audio');
+    const draft = args.includes('--draft');
+    await runBatch(config, async (htmlPath, outputPath) => {
+      const htmlConfig = parseHTMLFile(htmlPath);
+      // Override output path from batch config
+      htmlConfig.video.output = outputPath;
+      await renderHTML(htmlConfig, htmlPath, noAudio, draft);
+    });
     return;
   }
 
@@ -121,12 +141,20 @@ Commands:
 
 // ─── HTML render ────────────────────────────────────────────
 
-async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boolean = false) {
+async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boolean = false, draft: boolean = false, parallel: boolean = false) {
   const fmt = FORMAT_PRESETS[htmlConfig.video.format];
-  const width = fmt?.width ?? 1080;
-  const height = fmt?.height ?? 1920;
-  const fps = htmlConfig.video.fps;
+  let width = fmt?.width ?? 1080;
+  let height = fmt?.height ?? 1920;
+  let fps = htmlConfig.video.fps;
   const speed = htmlConfig.video.speed;
+
+  // Draft mode: half resolution, 15fps, ultrafast encoding
+  if (draft) {
+    width = Math.round(width / DRAFT_OVERRIDES.widthDivisor);
+    height = Math.round(height / DRAFT_OVERRIDES.heightDivisor);
+    fps = DRAFT_OVERRIDES.fps;
+    console.log('⚡ DRAFT MODE: %dx%d @ %dfps (ultrafast)', width, height, fps);
+  }
 
   // Build timeline from scene metadata
   let totalDurationMs = 0;
@@ -169,39 +197,82 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boo
   const outputDir = dirname(outputPath);
   if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true });
 
-  // Start encoder
-  const encoder = startEncoder({
-    fps,
-    codec: htmlConfig.video.codec as CodecId,
-    outputPath,
-    onLog: (msg) => process.stderr.write(msg + '\n'),
-  });
-
-  // Capture frames
   const startTime = Date.now();
-  const session = await initCapture({
-    width, height, fps, totalFrames, htmlPath,
-  });
 
-  await captureFrames(session, {
-    width, height, fps, totalFrames, htmlPath,
-    onFrame: (frame, total) => {
-      if (frame % 30 === 0 || frame === total) {
-        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-        const fpsActual = (frame / parseFloat(elapsed)).toFixed(1);
-        console.log(`  Frame ${frame}/${total} (${elapsed}s, ~${fpsActual} fps)`);
-      }
-    },
-  }, async (buffer) => {
-    await encoder.write(buffer);
-  });
+  // ─── Parallel or Sequential Render ─────────────────────────
+  if (parallel && htmlConfig.scenes.length >= 2) {
+    const { renderParallel, buildSceneSegments } = await import('./parallel-render.js');
+    let cursor = 0;
+    const sceneTimings = sceneDurations.map((dur) => {
+      const s = { startMs: cursor, durationMs: dur };
+      cursor += dur;
+      return s;
+    });
+    const segments = buildSceneSegments(sceneTimings, fps);
+    await renderParallel({
+      htmlPath, width, height, fps, totalFrames, totalDurationMs,
+      codec: htmlConfig.video.codec as CodecId,
+      outputPath,
+      scenes: segments,
+      ...(draft ? { codecOverride: DRAFT_OVERRIDES.codec } : {}),
+      onProgress: (done, total) => {
+        console.log(`  Segment ${done}/${total} complete`);
+      },
+    });
+  } else {
+    // Sequential render (default)
+    const encoder = startEncoder({
+      fps,
+      codec: htmlConfig.video.codec as CodecId,
+      outputPath,
+      onLog: (msg) => process.stderr.write(msg + '\n'),
+      ...(draft ? { codecOverride: DRAFT_OVERRIDES.codec } : {}),
+    });
 
-  await closeCapture(session);
-  await encoder.finish();
+    const session = await initCapture({
+      width, height, fps, totalFrames, htmlPath,
+    });
+
+    await captureFrames(session, {
+      width, height, fps, totalFrames, htmlPath,
+      onFrame: (frame, total) => {
+        if (frame % 30 === 0 || frame === total) {
+          const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+          const fpsActual = (frame / parseFloat(elapsed)).toFixed(1);
+          console.log(`  Frame ${frame}/${total} (${elapsed}s, ~${fpsActual} fps)`);
+        }
+      },
+    }, async (buffer) => {
+      await encoder.write(buffer);
+    });
+
+    await closeCapture(session);
+    await encoder.finish();
+  }
 
   const renderTime = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`\nVideo rendered: ${outputPath}`);
   console.log(`${totalFrames} frames in ${renderTime}s`);
+
+  // ─── Subtitle Generation ───────────────────────────────────
+  {
+    const { writeFileSync } = await import('fs');
+    let cursor = 0;
+    const sceneTimings: Array<{ startMs: number; endMs: number; text: string }> = [];
+    for (let i = 0; i < htmlConfig.scenes.length; i++) {
+      const endMs = cursor + sceneDurations[i];
+      const text = htmlConfig.scenes[i].elementTexts.join(' — ');
+      if (text.trim()) {
+        sceneTimings.push({ startMs: cursor, endMs, text });
+      }
+      cursor = endMs;
+    }
+    const srtPath = outputPath.replace(/\.mp4$/, '.srt');
+    const vttPath = outputPath.replace(/\.mp4$/, '.vtt');
+    writeFileSync(srtPath, generateSRT(sceneTimings));
+    writeFileSync(vttPath, generateVTT(sceneTimings));
+    console.log(`Subtitles: ${srtPath}`);
+  }
 
   // ─── Audio Processing ─────────────────────────────────────
   if (!noAudio) {

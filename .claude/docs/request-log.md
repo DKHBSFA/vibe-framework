@@ -30,6 +30,7 @@ Registro incrementale di tutte le richieste gestite dal framework.
 
 | # | Data | Ora | Tipologia | Descrizione | Doc riferimento | Stato |
 |---|------|-----|-----------|-------------|-----------------|-------|
+| 1 | 2026-02-12 | — | Feature | Orson v2: 10 interventi — draft mode, JPEG capture, HW encoding, subtitles, typography, batch, assets, parallel render, morph transitions, PiP | `specs/orson-v2-improvements.md` | completato |
 
 ---
 
