@@ -15,6 +15,7 @@ import {
   getBgAnimationKeyframes, getBgAnimationCSS, getDepthLayerHTML,
   getCompositionCSS,
 } from './choreography.js';
+import { embedAsDataURI } from './asset-embed.js';
 
 export function generateHTML(
   config: Config,
@@ -90,6 +91,9 @@ export function generateHTML(
   const dsLetterSpacing = tokens?.letterSpacing ?? '';
   const dsLetterSpacingWide = tokens?.letterSpacingWide ?? '';
   const dsFontWeight = tokens?.fontWeight ?? 800;
+  const dsFontVariation = tokens?.fontVariationSettings ?? '';
+  const dsHeadingLineHeight = tokens?.headingLineHeight ?? 0;
+  const dsTrackingDisplay = tokens?.trackingDisplay ?? '';
 
   const cardRadiusVal = dsRadius !== null ? dsRadius : p.cardRadius;
   const buttonRadiusVal = dsRadius !== null ? dsRadius : p.buttonRadius;
@@ -327,7 +331,7 @@ body {
 .el-heading {
   font-family: var(--font-display, var(--font-body, system-ui));
   font-weight: ${dsFontWeight};
-  line-height: 1.1;
+  line-height: ${dsHeadingLineHeight > 0 ? dsHeadingLineHeight : 1.1};
   padding-bottom: 0.05em;
   overflow: hidden;
   display: -webkit-box;
@@ -336,14 +340,16 @@ body {
   overflow-wrap: break-word;
   word-break: break-word;
   max-width: 100%;
+  text-wrap: balance;
   ${headingTransformCSS}
   ${headingTrackingCSS}
+  ${dsFontVariation ? `font-variation-settings: ${dsFontVariation};` : ''}
 }
 .el-heading.size-sm { font-size: ${p.headingScale.sm}px; }
 .el-heading.size-md { font-size: ${p.headingScale.md}px; }
 .el-heading.size-lg { font-size: ${p.headingScale.lg}px; }
-.el-heading.size-xl { font-size: clamp(${Math.round(p.headingScale.xl * 0.7)}px, 10vw, ${p.headingScale.xl}px); }
-.el-heading.size-2xl { font-size: clamp(${Math.round(p.headingScale['2xl'] * 0.65)}px, 12vw, ${p.headingScale['2xl']}px); }
+.el-heading.size-xl { font-size: clamp(${Math.round(p.headingScale.xl * 0.7)}px, 10vw, ${p.headingScale.xl}px); ${dsTrackingDisplay ? `letter-spacing: ${dsTrackingDisplay};` : ''} }
+.el-heading.size-2xl { font-size: clamp(${Math.round(p.headingScale['2xl'] * 0.65)}px, 12vw, ${p.headingScale['2xl']}px); ${dsTrackingDisplay ? `letter-spacing: ${dsTrackingDisplay};` : 'letter-spacing: -0.03em;'} }
 
 .el-text {
   font-size: ${p.textSize}px;
@@ -406,7 +412,25 @@ ${namedColors.length > 0 ? namedColors.map((c, i) => `.el-card:nth-child(${named
   max-width: 100%;
   max-height: ${p.imageMaxHeight};
   border-radius: ${p.imageRadius}px;
+  object-fit: contain;
 }
+/* Image layout variants (set via element style attribute) */
+.el-image.image-hero img { max-height: 60%; width: 90%; object-fit: cover; border-radius: ${Math.round(p.imageRadius * 1.5)}px; }
+.el-image.image-bg { position: absolute; inset: 0; z-index: 0; }
+.el-image.image-bg img { width: 100%; height: 100%; object-fit: cover; opacity: 0.3; border-radius: 0; }
+
+/* Video PiP element */
+.el-video { position: relative; }
+.el-video video {
+  max-width: 100%;
+  max-height: ${p.imageMaxHeight};
+  border-radius: ${p.imageRadius}px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+/* PiP position variants */
+.el-video.pip-corner { position: absolute; bottom: 5%; right: 5%; width: 35%; z-index: 10; }
+.el-video.pip-corner video { width: 100%; max-height: none; }
+.el-video.pip-center video { width: 80%; }
 
 ${keyframesCss.join('\n')}
 
@@ -701,7 +725,9 @@ function generateCardElements(el: TimelineElement, tokens?: DesignTokens): strin
     return items.map((item, i) => {
       const itemDelay = delayMs + (i * staggerDelay);
       const itemAnimStyle = `animation: ${entranceName} ${dur}ms ${easing} ${itemDelay}ms both;`;
+      const itemImgSrc = item.src ? embedAsDataURI(item.src) : '';
       return `<div class="el el-card" style="${itemAnimStyle}${extraStyle}">
+        ${itemImgSrc ? `<img src="${escapeHtml(itemImgSrc)}" alt="" style="max-width:100%;border-radius:8px;margin-bottom:8px;">` : ''}
         ${item.icon ? `<div class="card-icon">${iconPlaceholder(item.icon)}</div>` : ''}
         ${item.title ? `<div class="card-title">${escapeHtml(item.title)}</div>` : ''}
         ${item.text ? `<div class="card-text">${escapeHtml(item.text)}</div>` : ''}
@@ -756,8 +782,19 @@ function generateElementHTML(el: TimelineElement, tokens?: DesignTokens): string
       return `<div class="el el-text" style="${animStyle}${extraStyle}">${escapeHtml(cfg.text ?? '')}</div>`;
     case 'button':
       return `<div class="el el-button" style="${animStyle}${extraStyle}">${escapeHtml(cfg.text ?? '')}</div>`;
-    case 'image':
-      return `<div class="el el-image" style="${animStyle}"><img src="${escapeHtml(cfg.src ?? '')}" alt=""></div>`;
+    case 'image': {
+      const imgSrc = embedAsDataURI(cfg.src ?? '');
+      const imgVariant = cfg.style ?? '';
+      const variantClass = imgVariant ? ` ${imgVariant}` : '';
+      return `<div class="el el-image${variantClass}" style="${animStyle}"><img src="${escapeHtml(imgSrc)}" alt=""></div>`;
+    }
+    case 'video': {
+      // PiP video element — src must be a local file path, synced via currentTime in capture
+      const videoSrc = cfg.src ?? '';
+      const pipVariant = cfg.style ?? '';
+      const pipClass = pipVariant ? ` ${pipVariant}` : '';
+      return `<div class="el el-video${pipClass}" style="${animStyle}"><video src="${escapeHtml(videoSrc)}" muted preload="auto" data-pip="true"></video></div>`;
+    }
     case 'divider':
       return `<div class="el el-divider" style="${animStyle}"></div>`;
     case 'card':

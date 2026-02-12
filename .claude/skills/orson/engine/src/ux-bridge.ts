@@ -39,6 +39,13 @@ export interface DesignTokens {
   namedColors?: { name: string; value: string }[];
   // Font URLs for Google Fonts loading
   fontUrls?: string[];
+  // Advanced typography
+  /** Variable font settings (e.g., "'wght' 800, 'wdth' 100") */
+  fontVariationSettings?: string;
+  /** Display heading line-height (default: 1.1) */
+  headingLineHeight?: number;
+  /** Auto-negative tracking for large display text (e.g., '-0.04em') */
+  trackingDisplay?: string;
 }
 
 /** Resolve a DS path: accepts a file or a directory (searches for tokens.css first, then legacy system.md) */
@@ -162,6 +169,14 @@ export function readDesignTokens(systemMdPath: string): DesignTokens | null {
   // Font weight
   const weightBold = get('weight-bold');
   if (weightBold) tokens.fontWeight = parseInt(weightBold);
+
+  // Advanced typography
+  const fontVariation = get('font-variation-settings');
+  if (fontVariation) tokens.fontVariationSettings = fontVariation;
+  const headingLH = get('heading-line-height') ?? get('leading-heading');
+  if (headingLH) tokens.headingLineHeight = parseFloat(headingLH);
+  const trackingDisplay = get('tracking-display') ?? get('tracking-tighter');
+  if (trackingDisplay) tokens.trackingDisplay = trackingDisplay;
 
   // Collect all named color tokens (jewel tones, brand colors)
   const namedColors: { name: string; value: string }[] = [];

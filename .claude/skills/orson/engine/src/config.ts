@@ -7,7 +7,7 @@ import { z } from 'zod';
 const DurationStr = z.string().regex(/^\d+(\.\d+)?(ms|s)$/, 'Duration must be like "500ms" or "1.5s"');
 
 const ElementSchema = z.object({
-  type: z.enum(['heading', 'text', 'button', 'image', 'card', 'card-group', 'divider']),
+  type: z.enum(['heading', 'text', 'button', 'image', 'video', 'card', 'card-group', 'divider']),
   text: z.string().optional(),
   title: z.string().optional(),
   icon: z.string().optional(),

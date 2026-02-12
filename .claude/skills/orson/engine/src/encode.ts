@@ -1,14 +1,36 @@
 // FFmpeg pipe encoding — accepts PNG buffers, outputs video file
 
-import { spawn, type ChildProcess } from 'child_process';
-import type { CodecId } from './presets.js';
-import { CODEC_PRESETS } from './presets.js';
+import { spawn, execSync, type ChildProcess } from 'child_process';
+import type { CodecId, CodecPreset, HwAccelId } from './presets.js';
+import { CODEC_PRESETS, HW_ACCEL_PRESETS } from './presets.js';
+
+export type InputFormat = 'png' | 'jpeg';
 
 export interface EncodeOptions {
   fps: number;
   codec: CodecId;
   outputPath: string;
   onLog?: (msg: string) => void;
+  /** Override codec preset (used by --draft mode) */
+  codecOverride?: CodecPreset;
+  /** Input frame format: 'jpeg' (default) or 'png' */
+  inputFormat?: InputFormat;
+  /** Use hardware encoder if available (default: true) */
+  useHardwareAccel?: boolean;
+}
+
+/**
+ * Probe FFmpeg for available hardware encoders.
+ * Returns the best available HW accel ID, or null if none found.
+ */
+export function detectHardwareEncoder(): HwAccelId | null {
+  try {
+    const encoders = execSync('ffmpeg -encoders 2>/dev/null', { encoding: 'utf-8' });
+    if (encoders.includes('h264_nvenc')) return 'nvenc';
+    if (encoders.includes('h264_vaapi')) return 'vaapi';
+    if (encoders.includes('h264_videotoolbox')) return 'videotoolbox';
+  } catch {}
+  return null;
 }
 
 export interface Encoder {
@@ -18,17 +40,33 @@ export interface Encoder {
 }
 
 export function startEncoder(opts: EncodeOptions): Encoder {
-  const preset = CODEC_PRESETS[opts.codec];
+  let preset = opts.codecOverride ?? CODEC_PRESETS[opts.codec];
 
+  // Auto-detect hardware encoder (only for h264, skip if codecOverride is set)
+  const useHw = opts.useHardwareAccel !== false && !opts.codecOverride && opts.codec === 'h264';
+  let hwAccel: HwAccelId | null = null;
+  if (useHw) {
+    hwAccel = detectHardwareEncoder();
+    if (hwAccel) {
+      const hw = HW_ACCEL_PRESETS[hwAccel];
+      preset = { ...preset, encoder: hw.encoder, extraArgs: [...hw.extraArgs] };
+      // HW encoders don't use -preset or -crf the same way — strip them
+      opts.onLog?.(`Using hardware encoder: ${hw.encoder}`);
+    }
+  }
+
+  const inputFmt = opts.inputFormat ?? 'jpeg';
+  const isHwEncoder = hwAccel !== null;
   const args = [
     '-y',
     '-f', 'image2pipe',
+    ...(inputFmt === 'jpeg' ? ['-c:v', 'mjpeg'] : []),
     '-framerate', String(opts.fps),
     '-i', '-',
     '-c:v', preset.encoder,
     '-pix_fmt', preset.pixFmt,
-    '-preset', preset.preset,
-    '-crf', String(preset.crf),
+    // HW encoders use their own quality params (in extraArgs), not -preset/-crf
+    ...(isHwEncoder ? [] : ['-preset', preset.preset, '-crf', String(preset.crf)]),
     ...preset.extraArgs,
     opts.outputPath,
   ];

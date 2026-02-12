@@ -279,14 +279,14 @@ export const NARRATIVE_PATTERNS: NarrativePattern[] = [
 // Semantic transition rules — transitions carry narrative meaning
 const TRANSITION_RULES: TransitionRule[] = [
   { position: 'opening',             preferred: ['cut', 'zoom-in'] },
-  { position: 'problem-to-solution', preferred: ['wipe-left', 'crossfade'] },
-  { position: 'between-features',    preferred: ['slide-left', 'crossfade'] },
-  { position: 'feature-to-proof',    preferred: ['crossfade'] },
-  { position: 'to-cta',             preferred: ['zoom-in', 'fade'] },
-  { position: 'proof-to-cta',       preferred: ['crossfade'] },
+  { position: 'problem-to-solution', preferred: ['morph-layout', 'wipe-left', 'crossfade'] },
+  { position: 'between-features',    preferred: ['shared-element', 'slide-left', 'crossfade'] },
+  { position: 'feature-to-proof',    preferred: ['cross-dissolve', 'crossfade'] },
+  { position: 'to-cta',             preferred: ['morph-layout', 'zoom-in', 'fade'] },
+  { position: 'proof-to-cta',       preferred: ['cross-dissolve', 'crossfade'] },
   { position: 'within-rapid',       preferred: ['cut'] },
-  { position: 'to-breathing',       preferred: ['fade'] },
-  { position: 'from-breathing',     preferred: ['fade'] },
+  { position: 'to-breathing',       preferred: ['cross-dissolve', 'fade'] },
+  { position: 'from-breathing',     preferred: ['cross-dissolve', 'fade'] },
 ];
 
 // All transition IDs available in the safe pool
@@ -294,6 +294,7 @@ const ALL_SAFE_TRANSITIONS = [
   'cut', 'fade', 'crossfade',
   'slide-left', 'slide-right', 'slide-up', 'slide-down',
   'blur', 'push-left', 'push-right', 'push-up', 'push-down',
+  'cross-dissolve', 'morph-layout', 'shared-element',
 ];
 
 const ALL_TRANSITIONS = [
@@ -301,6 +302,7 @@ const ALL_TRANSITIONS = [
   'wipe-left', 'wipe-right', 'circle-reveal', 'diamond-reveal',
   'zoom-in', 'zoom-out', 'iris-open', 'iris-close',
   'flash', 'glitch', 'rotate',
+  'morph-scale-shift',
 ];
 
 // ─── Background Generators ──────────────────────────────────
