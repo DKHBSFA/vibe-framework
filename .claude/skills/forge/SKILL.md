@@ -175,6 +175,10 @@ Triggers on file extensions, 'spreadsheet', 'Excel', 'Word', 'PowerPoint',
 
 **Budget:** SKILL.md body should be under 3000 words. Move anything beyond that to references.
 
+### Progressive Disclosure Details
+
+For the full progressive disclosure methodology (3-layer classification, routing patterns, compliance metrics), read `references/progressive-disclosure.md`.
+
 ### Trimming Methodology
 
 For the full decision matrix and content classification guide, read `references/trimming-methodology.md`.

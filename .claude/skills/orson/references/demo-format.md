@@ -44,7 +44,7 @@ The demo script is a JSON file that defines a live website recording session wit
       "highlight": true
     }
   ],
-  "output": "./output/demo.mp4",
+  "output": "./.orson/demo.mp4",
   "gapBetweenSteps": 800,
   "zoomTransitionMs": 400
 }
@@ -86,3 +86,28 @@ The demo script is a JSON file that defines a live website recording session wit
 ### Auth Step Fields
 
 Same as step fields, but only `action`, `url`, `selector`, `value`, and `waitFor` are used. Auth steps execute before recording begins.
+
+---
+
+## Authentication Patterns
+
+Demo mode supports pre-authenticated sessions. Two approaches:
+
+**1. Auth steps in script (username/password flows):**
+Use the `auth` array in the demo script. Steps execute before recording starts.
+
+**2. Pre-exported storageState (OAuth/SSO flows):**
+For providers like Clerk, Auth0, Firebase with OAuth (Google, GitHub SSO), Playwright cannot handle third-party OAuth popups. Instead:
+1. Log in manually in a browser
+2. Export the session via Playwright's `storageState` API or browser dev tools
+3. Pass the exported JSON via `storageState` field in the demo script
+
+The engine loads `storageState` into the browser context before navigating to the demo URL.
+
+---
+
+## Known Issues with Modern Frameworks
+
+- Use `waitUntil: 'load'` (NOT `networkidle`) — frameworks with HMR/WebSocket (Next.js, Vite, Nuxt) keep connections open permanently, causing `networkidle` to timeout.
+- Next.js dev overlay (`<nextjs-portal>`) intercepts pointer events. The engine removes it automatically before recording and after navigation.
+- After SPA navigation (client-side routing), cursor/zoom overlays may be destroyed. The engine re-injects them automatically when URL changes.

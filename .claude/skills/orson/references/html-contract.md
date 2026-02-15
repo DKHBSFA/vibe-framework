@@ -7,7 +7,7 @@ Reference for writing video HTML in Phase 3 of `/orson create`.
 ## File Structure
 
 ```html
-<!-- @video format="horizontal-16x9" fps="60" speed="normal" mode="safe" codec="h265" output="./output/video.mp4" -->
+<!-- @video format="horizontal-16x9" fps="60" speed="normal" mode="safe" codec="h265" output="./.orson/video.mp4" -->
 
 <!-- @scene name="Scene Name" duration="4000ms" transition-out="crossfade" transition-duration="500ms" -->
 <div class="scene" id="scene-N">

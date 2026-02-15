@@ -249,19 +249,19 @@ Available generation prompts:
 
 **Every page/site MUST have these. If any are missing after generation, flag as BLOCKER before delivery.**
 
-| Requirement | What | Why it failed in audits |
-|-------------|------|------------------------|
-| Canonical tag | `<link rel="canonical" href="https://..." />` in `<head>` | Cumino: missing entirely |
-| Schema.org | JSON-LD in `<head>` matching content type | Cumino: missing entirely |
-| OpenGraph (ALL 6) | og:title, og:description, og:image, og:url, og:type, og:site_name | TNA: partial/missing |
-| XML Sitemap | /sitemap.xml accessible | TNA: missing entirely |
-| robots.txt | /robots.txt with sitemap reference | TNA: missing entirely |
-| WWW canonicalization | 301 redirect www↔non-www | TNA: not configured |
-| External links | ≥1 for landing pages, ≥2 for articles | TNA: 0, Hype: 0 |
-| Internal links | ≥8 for landing pages | Hype: only 5 |
-| H2 sections | ≥4 for landing pages/homepages | TNA: only 2, Hype: only 2 |
-| Title length | 30-55 chars (hard max 60) | TNA: 116 chars with brand duplication |
-| Meta description | 120-155 chars (hard max 158) | TNA: 163, Hype: 161 |
+| Requirement | What | Common failure |
+|-------------|------|----------------|
+| Canonical tag | `<link rel="canonical" href="https://..." />` in `<head>` | Missing entirely |
+| Schema.org | JSON-LD in `<head>` matching content type | Missing entirely |
+| OpenGraph (ALL 6) | og:title, og:description, og:image, og:url, og:type, og:site_name | Partial or missing |
+| XML Sitemap | /sitemap.xml accessible | Missing entirely |
+| robots.txt | /robots.txt with sitemap reference | Missing entirely |
+| WWW canonicalization | 301 redirect www↔non-www | Not configured |
+| External links | ≥1 for landing pages, ≥2 for articles | Zero external links |
+| Internal links | ≥8 for landing pages | Below minimum count |
+| H2 sections | ≥4 for landing pages/homepages | Only 2 sections |
+| Title length | 30-55 chars (hard max 60) | Exceeds 60 chars, brand duplication |
+| Meta description | 120-155 chars (hard max 158) | Exceeds 158 chars |
 
 **Enforcement rule**: When generating content for a site, ALWAYS include a "Technical Infrastructure" section in the deliverable listing what the site needs. Do not assume the framework handles it.
 

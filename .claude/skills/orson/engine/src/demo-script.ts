@@ -114,7 +114,7 @@ export const DemoScriptSchema = z.object({
   storageState: z.string().optional().describe('Path to Playwright storageState JSON for pre-authenticated sessions'),
   steps: z.array(DemoStepSchema).min(1),
 
-  output: z.string().default('./output/demo.mp4'),
+  output: z.string().default('./.orson/demo.mp4'),
   gapBetweenSteps: z.number().default(800).describe('Gap between steps in ms'),
   zoomTransitionMs: z.number().default(400).describe('Zoom transition duration in ms'),
 });

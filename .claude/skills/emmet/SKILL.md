@@ -280,17 +280,11 @@ Skill files are organized in: `prompts/`, `templates/`, `testing/`, and `checkli
 
 ---
 
-## Visual Testing (Opus 4.6)
+## Visual Testing
 
-For UI-related testing, use screenshot comparison:
+Use screenshot comparison for visual regression: capture before/after screenshots via Playwright (headless) or BrowserMCP (visual), compare for layout shifts, missing elements, broken styling, and color changes. Flag unintended regressions in the test report.
 
-1. Screenshot the page before modifications
-2. Apply the code changes
-3. Screenshot the page after modifications
-4. Compare visually: layout shifts, missing elements, broken styling, color changes
-5. Flag any unintended visual regressions in the test report
-
-Works with both Playwright (headless screenshot) and BrowserMCP (visual inspection).
+For full functional map and testing knowledge base, see `KNOWLEDGE.md`.
 
 ---
 
