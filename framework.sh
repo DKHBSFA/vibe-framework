@@ -91,8 +91,19 @@ done
 SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 if [ -z "$TARGET_DIR" ]; then
-  echo "Usage: $0 /path/to/target/project [--dry-run]"
-  exit 1
+  PARENT_DIR="$(cd "$SOURCE_DIR/.." && pwd)"
+  echo ""
+  echo "No target directory specified."
+  echo "Install framework to parent directory?"
+  echo "  → $PARENT_DIR"
+  echo ""
+  read -rp "Proceed? [Y/n] " answer
+  if [[ "$answer" =~ ^[Nn]$ ]]; then
+    echo ""
+    echo "Usage: $0 /path/to/target/project [--dry-run]"
+    exit 0
+  fi
+  TARGET_DIR="$PARENT_DIR"
 fi
 
 if [ ! -d "$TARGET_DIR" ]; then
@@ -489,7 +500,23 @@ fi
 if ! command -v jq &>/dev/null; then
   echo ""
   echo "  WARNING: jq not found. Morpheus context awareness requires jq."
-  echo "  Install it: sudo apt install jq (Debian/Ubuntu) or brew install jq (macOS)"
+  if command -v pacman &>/dev/null; then
+    echo "  Install it: sudo pacman -S jq"
+  elif command -v apt &>/dev/null; then
+    echo "  Install it: sudo apt install jq"
+  elif command -v dnf &>/dev/null; then
+    echo "  Install it: sudo dnf install jq"
+  elif command -v brew &>/dev/null; then
+    echo "  Install it: brew install jq"
+  elif command -v choco &>/dev/null; then
+    echo "  Install it: choco install jq"
+  elif command -v scoop &>/dev/null; then
+    echo "  Install it: scoop install jq"
+  elif command -v winget &>/dev/null; then
+    echo "  Install it: winget install jqlang.jq"
+  else
+    echo "  Install it: https://jqlang.github.io/jq/download/"
+  fi
 fi
 
 # Step 8: Clean up empty backup dir
