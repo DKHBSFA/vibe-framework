@@ -74,6 +74,7 @@ const DemoStepSchema = z.object({
   waitFor: z.string().optional().describe('CSS selector to wait for before proceeding'),
   waitAfter: z.number().optional().describe('Extra pause after action (ms)'),
   typingSpeed: z.number().optional().describe('Typing speed for fill actions (ms per char)'),
+  sfx: z.string().optional().describe('SFX override: explicit SFX type (e.g. "ui-click") or "none" to silence auto-SFX'),
 });
 
 const MusicConfigSchema = z.object({
@@ -85,6 +86,12 @@ const MusicConfigSchema = z.object({
 const SubtitleConfigSchema = z.object({
   enabled: z.boolean().default(true),
   style: z.enum(['bottom', 'top', 'center', 'none']).default('bottom'),
+});
+
+const SfxConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  volume: z.number().min(0).max(1).default(0.7),
+  autoFromActions: z.boolean().default(true),
 });
 
 export const DemoScriptSchema = z.object({
@@ -101,6 +108,7 @@ export const DemoScriptSchema = z.object({
 
   music: MusicConfigSchema.default({}),
   subtitles: SubtitleConfigSchema.default({}),
+  sfx: SfxConfigSchema.default({}),
 
   auth: z.array(AuthStepSchema).optional().describe('Pre-recording auth steps'),
   storageState: z.string().optional().describe('Path to Playwright storageState JSON for pre-authenticated sessions'),

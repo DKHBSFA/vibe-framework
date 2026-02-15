@@ -17,6 +17,12 @@ export interface HTMLVideoConfig {
   'entrance-speed'?: SpeedPreset;
 }
 
+export interface SceneSfxEvent {
+  type: string;
+  startMs: number;
+  durationMs?: number; // for loopable SFX
+}
+
 export interface HTMLSceneConfig {
   name: string;
   duration?: number;          // ms
@@ -24,6 +30,7 @@ export interface HTMLSceneConfig {
   transitionDuration?: number; // ms
   elementCount: number;
   elementTexts: string[];
+  sfx?: SceneSfxEvent[];     // SFX events from sfx="type@startMs,type@startMs:durationMs"
 }
 
 export interface HTMLConfig {
@@ -64,6 +71,37 @@ function parseDuration(val: string | undefined): number | undefined {
   if (val.endsWith('ms')) return parseFloat(val);
   if (val.endsWith('s')) return parseFloat(val) * 1000;
   return parseFloat(val);
+}
+
+// ─── SFX parser ─────────────────────────────────────────────
+
+/**
+ * Parse sfx attribute: "type@startMs" or "type@startMs:durationMs"
+ * Multiple events separated by commas.
+ * Example: sfx="click@1500,typing@2000:3000,whoosh@5000"
+ */
+function parseSfxAttr(sfxStr: string): SceneSfxEvent[] {
+  if (!sfxStr || sfxStr.trim() === '') return [];
+
+  return sfxStr.split(',').map(part => {
+    const trimmed = part.trim();
+    const atIdx = trimmed.indexOf('@');
+    if (atIdx === -1) return null;
+
+    const type = trimmed.slice(0, atIdx);
+    const timePart = trimmed.slice(atIdx + 1);
+    const colonIdx = timePart.indexOf(':');
+
+    if (colonIdx === -1) {
+      return { type, startMs: parseInt(timePart, 10) };
+    } else {
+      return {
+        type,
+        startMs: parseInt(timePart.slice(0, colonIdx), 10),
+        durationMs: parseInt(timePart.slice(colonIdx + 1), 10),
+      };
+    }
+  }).filter((e): e is SceneSfxEvent => e !== null && !isNaN(e.startMs));
 }
 
 // ─── Scene element extraction ───────────────────────────────
@@ -136,14 +174,21 @@ export function parseHTMLString(html: string): HTMLConfig {
 
     const { count, texts } = extractSceneElements(sceneHtml);
 
-    scenes.push({
+    const scene: HTMLSceneConfig = {
       name: attrs.name || `Scene ${i}`,
       duration: parseDuration(attrs.duration),
       transitionOut: attrs['transition-out'],
       transitionDuration: parseDuration(attrs['transition-duration']),
       elementCount: count,
       elementTexts: texts,
-    });
+    };
+
+    // Parse sfx attribute if present
+    if (attrs.sfx) {
+      scene.sfx = parseSfxAttr(attrs.sfx);
+    }
+
+    scenes.push(scene);
   }
 
   if (scenes.length === 0) {

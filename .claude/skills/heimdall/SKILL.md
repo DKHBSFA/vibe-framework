@@ -109,11 +109,17 @@ Scan file or directory for vulnerabilities.
 - Line number and code snippet
 - Remediation guidance
 
-### `/heimdall audit`
+### `/heimdall audit [--quick|--deep]`
 
-Full project security audit.
+Full project security audit. Profondità configurabile (ispirata a OWASP ASVS):
 
-**Checks**:
+| Livello | Flag | Cosa fa |
+|---------|------|---------|
+| L1 — Quick | `--quick` | OWASP Top 10 + secrets + BaaS config. Per check rapidi. |
+| L2 — Standard | (default) | L1 + iteration analysis + dependency audit + logic patterns. |
+| L3 — Deep | `--deep` | L2 + analisi cross-file flussi auth, data flow tracking, review file con cyclomatic complexity > 15. Per progetti ad alto rischio. |
+
+**Checks L2 (default)**:
 1. All source files for OWASP Top 10 patterns
 2. All files for exposed credentials
 3. BaaS configuration files (Supabase, Firebase)

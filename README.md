@@ -1,6 +1,6 @@
 # Claude Development Framework
 
-An operating system for Claude Code with 8 specialized skills. It defines *how* Claude works (process rules, memory, verification) and *what* it knows (domain-specific skills).
+An operating system for Claude Code with 8 specialized skills and context awareness (Morpheus). It defines *how* Claude works (process rules, memory, verification) and *what* it knows (domain-specific skills).
 
 ## Skills
 

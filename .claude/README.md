@@ -60,6 +60,8 @@ Due componenti che lavorano insieme:
    - **scribe** — Creazione e editing documenti Office (xlsx, docx, pptx) e PDF, routing automatico per tipo file
    - **forge** — Meta-skill: creazione, manutenzione, audit e miglioramento skill Claude Code
 
+3. **Morpheus** (`.claude/morpheus/`) — Context awareness: monitora l'uso della context window e inietta istruzioni quando si superano soglie (60% triage, 80% save-state, 93% halt). Richiede `jq`.
+
 Il framework definisce *come* Claude lavora. Le skill definiscono *cosa* sa fare in ambiti specifici.
 
 ---
@@ -81,6 +83,8 @@ progetto/
     │   ├── visual-composition-principles.md  # Principi composizione visiva condivisi
     │   ├── specs/            # Specifiche feature (prima di implementare)
     │   └── session-notes/    # Post-mortem delle sessioni complesse
+    ├── morpheus/             # Context awareness (statusLine + hook injector)
+    │   └── config.json       # Soglie (60/80/93%), messaggi, repeat mode
     ├── rules/
     │   └── ui-components.md  # Regole per componenti UI
     └── skills/
@@ -117,7 +121,7 @@ progetto/
         │   ├── geo/          # GEO per AI search
         │   ├── copywriting/  # Framework persuasivi
         │   ├── generation/   # Prompt operativi per generazione
-        │   ├── validation/   # 46 regole misurabili
+        │   ├── validation/   # 50 regole misurabili
         │   ├── templates/    # Template contenuti + JSON-LD schemas
         │   ├── checklists/   # Pre-publish e audit
         │   ├── workflows/    # Flussi interattivi
@@ -427,7 +431,7 @@ Testing, QA, tech debt audit, functional mapping e checklist di sviluppo. Includ
 | `/emmet test --static` | Solo analisi statica (veloce, no browser) |
 | `/emmet test --browser` | Solo test browser (Playwright o BrowserMCP) |
 | `/emmet report` | Genera bug report dall'ultimo test |
-| `/emmet techdebt [path]` | Audit duplicazioni, export orfani, import inutilizzati, file oversized |
+| `/emmet techdebt [path]` | Audit duplicazioni, export orfani, import inutilizzati, file oversized + Debt Rating A-F |
 | `/emmet checklist [type]` | Carica checklist (pre-deploy, refactoring, code-review, security) |
 
 **Funzionalità:**
@@ -449,7 +453,7 @@ Analisi di sicurezza specifica per codice AI-generated. Rileva vulnerabilità ti
 | Comando | Cosa fa |
 |---------|---------|
 | `/heimdall scan [path]` | Scansiona file/directory per vulnerabilità |
-| `/heimdall audit` | Audit completo del progetto |
+| `/heimdall audit [--quick\|--deep]` | Audit progetto (L1 quick / L2 standard / L3 deep) |
 | `/heimdall secrets` | Scansione credenziali e segreti |
 | `/heimdall baas [provider]` | Audit configurazione BaaS (Supabase/Firebase) |
 | `/heimdall status` | Stato sicurezza dei file tracciati |
@@ -524,7 +528,7 @@ Generazione video programmatica + demo recording. Segue un workflow cinematograf
 
 **Caratteristiche:** Architettura frame-addressed (v3) con `interpolate()`, `spring()`, `window.__setFrame(n)`. 136+ animazioni (property-based interpolation maps), 4 modi (safe/chaos/hybrid/cocomelon), content-driven timing, integrazione seurat + ghostwriter, director system (content-aware animation). Audio integrato: selezione tracce automatica, TTS narration (Edge-TTS), ducking, mixing FFmpeg. Demo mode: Playwright recording con zoom, cursor animato, narrazione, sottotitoli WebVTT.
 
-**Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH). Opzionale: `pip install edge-tts` per narrazione TTS.
+**Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH). Opzionale: `pip install edge-tts` per narrazione TTS. Opzionale: `pip install elevenlabs` per ElevenLabs TTS engine.
 
 **Attivazione:** video generation, promo video, social media video, product video, demo recording
 

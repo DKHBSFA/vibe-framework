@@ -217,5 +217,5 @@ When `/emmet report` is invoked:
 1. **Gather results** - Collect outputs from `/emmet test` and `/emmet journey`
 2. **Categorize bugs** - Assign IDs and severity
 3. **Generate report** - Fill template
-4. **Output** - Save to `.claude/docs/test-report.md`
+4. **Output** - Save to `.emmet/test-report.md`
 5. **Summary** - Provide executive summary to user

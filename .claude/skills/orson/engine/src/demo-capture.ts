@@ -10,8 +10,8 @@ import { fileURLToPath } from 'url';
 import { parseDemoScript, generateNarrationBrief, type DemoScript, type AuthStep } from './demo-script.js';
 import { buildDemoTimeline, type DemoTimeline, type NarrationManifest } from './demo-timeline.js';
 import { injectCursor, animateCursor, injectZoomOverlay, applyZoom, resetZoom, highlightElement, removeDevOverlay } from './demo-director.js';
-import { selectTrack, type VideoMeta } from './audio-selector.js';
-import { trimAndLoop, applyDucking, fadeInOut, concatenateNarration, mixTracks, mergeAudioVideo, type DuckingEvent } from './audio-mixer.js';
+import { selectTrack, selectSfx, type VideoMeta } from './audio-selector.js';
+import { trimAndLoop, applyDucking, fadeInOut, concatenateNarration, concatenateSfx, mixTracks, mergeAudioVideo, type DuckingEvent, type SfxEvent } from './audio-mixer.js';
 import { generateWebVTT } from './demo-subtitles.js';
 import { FORMAT_PRESETS } from './presets.js';
 
@@ -414,6 +414,111 @@ export async function runDemo(scriptPath: string): Promise<void> {
     console.log(`  [demo] Step ${step.stepIndex + 1}: ${(step.stepStart / 1000).toFixed(1)}s → ${(step.stepEnd / 1000).toFixed(1)}s`);
   }
 
+  // Step 3.5: Build SFX track
+  const sfxEvents: SfxEvent[] = [];
+  if (script.sfx.enabled) {
+    console.log('\n[demo] Step 3.5: Building SFX track...');
+    const sfxVolume = script.sfx.volume;
+
+    for (let i = 0; i < timeline.steps.length; i++) {
+      const step = timeline.steps[i];
+      const scriptStep = script.steps[step.stepIndex];
+
+      // Per-step SFX override: "none" silences, explicit type overrides auto
+      if (scriptStep.sfx === 'none') continue;
+
+      if (scriptStep.sfx) {
+        // Explicit SFX
+        const sel = selectSfx(scriptStep.sfx);
+        if (sel) {
+          sfxEvents.push({
+            path: sel.sfxPath,
+            startMs: step.actionStart,
+            durationMs: sel.durationMs,
+            gain: sfxVolume,
+          });
+        }
+        continue;
+      }
+
+      // Auto SFX from action type (only if autoFromActions is true)
+      if (!script.sfx.autoFromActions) continue;
+
+      switch (scriptStep.action) {
+        case 'click': {
+          const sel = selectSfx('ui-click');
+          if (sel) {
+            sfxEvents.push({
+              path: sel.sfxPath,
+              startMs: step.actionStart + 500, // after cursor move
+              durationMs: sel.durationMs,
+              gain: sfxVolume,
+            });
+          }
+          break;
+        }
+        case 'fill': {
+          const sel = selectSfx('typing-loop');
+          if (sel) {
+            const charCount = (scriptStep.value ?? '').length;
+            const typingSpeed = scriptStep.typingSpeed ?? 60;
+            const typingDurationMs = charCount * typingSpeed;
+            sfxEvents.push({
+              path: sel.sfxPath,
+              startMs: step.actionStart + 700, // after cursor move + click
+              durationMs: Math.max(typingDurationMs, 500),
+              gain: sfxVolume,
+            });
+          }
+          break;
+        }
+        case 'navigate': {
+          const sel = selectSfx('scene-transition');
+          if (sel) {
+            sfxEvents.push({
+              path: sel.sfxPath,
+              startMs: step.actionStart,
+              durationMs: sel.durationMs,
+              gain: sfxVolume,
+            });
+          }
+          break;
+        }
+        case 'scroll': {
+          const sel = selectSfx('transition');
+          if (sel) {
+            sfxEvents.push({
+              path: sel.sfxPath,
+              startMs: step.actionStart,
+              durationMs: sel.durationMs,
+              gain: sfxVolume * 0.5, // subtle
+            });
+          }
+          break;
+        }
+      }
+    }
+
+    // Scene transitions — add SFX at gaps between steps
+    for (let i = 1; i < timeline.steps.length; i++) {
+      const prevEnd = timeline.steps[i - 1].stepEnd;
+      const currStart = timeline.steps[i].stepStart;
+      if (currStart > prevEnd) {
+        const sel = selectSfx('scene-transition');
+        if (sel) {
+          sfxEvents.push({
+            path: sel.sfxPath,
+            startMs: prevEnd,
+            durationMs: sel.durationMs,
+            gain: sfxVolume,
+          });
+        }
+      }
+    }
+
+    console.log(`  [sfx] ${sfxEvents.length} SFX events collected`);
+  }
+
   // Step 4: Record video
   console.log('\n[demo] Step 4: Recording demo...');
   const fmt = FORMAT_PRESETS[script.format];
@@ -480,7 +585,16 @@ export async function runDemo(scriptPath: string): Promise<void> {
   const concatenatedNarration = resolve(workDir, 'narration-full.mp3');
   await concatenateNarration(narrationFiles, timeline.totalDurationMs, concatenatedNarration);
 
-  // 6b: Select and process music track
+  // 6b: Build SFX track (if any events collected)
+  let sfxTrackPath: string | null = null;
+  if (sfxEvents.length > 0) {
+    console.log('  [audio] Processing SFX...');
+    sfxTrackPath = resolve(workDir, 'sfx-track.mp3');
+    await concatenateSfx(sfxEvents, timeline.totalDurationMs, sfxTrackPath);
+    console.log(`  [audio] SFX track: ${sfxEvents.length} events`);
+  }
+
+  // 6c: Select and process music track
   let finalAudioPath = concatenatedNarration;
 
   if (script.music.enabled) {
@@ -512,15 +626,27 @@ export async function runDemo(scriptPath: string): Promise<void> {
     const fadedMusic = resolve(workDir, 'music-faded.mp3');
     await fadeInOut(duckedMusic, 500, 2000, fadedMusic);
 
-    // Mix narration + music (ducking already applied volume envelope, use fixed gain)
+    // Mix narration + music + SFX
+    const mixInputs: { path: string; gain: number }[] = [
+      { path: concatenatedNarration, gain: 1.0 },
+      { path: fadedMusic, gain: 1.0 },
+    ];
+    if (sfxTrackPath && existsSync(sfxTrackPath)) {
+      mixInputs.push({ path: sfxTrackPath, gain: 1.0 }); // gain already baked into SFX track
+    }
+
+    finalAudioPath = resolve(workDir, 'audio-mixed.mp3');
+    await mixTracks(mixInputs, finalAudioPath);
+  } else if (sfxTrackPath && existsSync(sfxTrackPath)) {
+    // No music but we have SFX — mix narration + SFX
     finalAudioPath = resolve(workDir, 'audio-mixed.mp3');
     await mixTracks([
       { path: concatenatedNarration, gain: 1.0 },
-      { path: fadedMusic, gain: 1.0 },
+      { path: sfxTrackPath, gain: 1.0 },
     ], finalAudioPath);
   }
 
-  // 6c: Merge audio into video
+  // 6d: Merge audio into video
   mkdirSync(dirname(outputPath), { recursive: true });
   await mergeAudioVideo(silentVideoPath, finalAudioPath, outputPath);
   console.log('  [audio] Audio merged');
