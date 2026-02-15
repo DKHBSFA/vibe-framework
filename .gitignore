@@ -4,4 +4,5 @@ __pycache__/
 .claude/docs/session-notes/*.md
 !.claude/docs/session-notes/.gitkeep
 .claude/skills/orson/engine/dist/
-TEST/
+.emmet/
+.forge/
