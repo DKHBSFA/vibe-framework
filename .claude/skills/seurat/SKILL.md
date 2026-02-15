@@ -333,15 +333,6 @@ Detailed documentation is in subdirectories: `accessibility.md`, `typography.md`
 
 ---
 
-## Visual QA (Opus 4.6)
+## Visual QA
 
-After generating UI (HTML/CSS), verify visually:
-
-1. Open the generated HTML in the browser
-2. Capture screenshot with Playwright or BrowserMCP
-3. Read the screenshot and verify:
-   - Alignment of elements (grid, flex gaps)
-   - Text legibility (contrast ratios meet WCAG AA)
-   - Design token adherence (colors, spacing, typography match the system)
-   - Responsive behavior at 375px, 768px, 1280px viewports
-4. If issues found, fix and re-verify before delivery
+After generating UI, use `/emmet test --browser` for visual regression testing, or capture screenshots manually with Playwright at 375px, 768px, and 1280px viewports.

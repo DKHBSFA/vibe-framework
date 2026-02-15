@@ -109,10 +109,10 @@ Check for existing seurat design system:
 
 #### Step 1.3: Output Location
 
-Ask where to save generated files:
-- **Project folder** — e.g., `<project>/video/`
-- **Current directory**
-- **Custom path**
+Default output directory: `.orson/` (in the project root). Inform the user:
+> "I file verranno salvati in `.orson/` — è già nel `.gitignore`."
+
+Only ask for a custom path if the user explicitly requests one.
 
 #### Step 1.4: Video Parameters
 
@@ -247,7 +247,7 @@ Tell the user which recipe and arc you chose before writing HTML.
 
 #### Step 3.1: Write the HTML
 
-Create `<output-dir>/video.html`. Read `references/html-contract.md` for the full HTML format specification (comment syntax, scene structure, animation script, available easings/properties, format-specific CSS).
+Create `<output-dir>/video.html`. Read `references/html-contract.md` for the full HTML format specification (comment syntax, scene structure, animation script, available easings/properties, format-specific CSS). For reusable CSS layout snippets (hero, cards, code blocks, mockups, stats), see `references/components.md`.
 
 #### Step 3.2: Preview & Verify
 
@@ -330,7 +330,7 @@ To add a new TTS engine, read `references/tts-extension.md`.
 
 ```bash
 # Using default engine (edge-tts)
-python .claude/skills/orson/engine/audio/narration_generator.py brief.json ./output/narration/
+python .claude/skills/orson/engine/audio/narration_generator.py brief.json ./.orson/narration/
 
 # List available voices for active engine
 python .claude/skills/orson/engine/audio/narration_generator.py --list-voices
@@ -416,7 +416,7 @@ Write the script JSON and run:
 npx tsx .claude/skills/orson/engine/src/index.ts demo <script.json>
 ```
 
-For demo script JSON format and field reference, read `references/demo-format.md`.
+For demo script JSON format, field reference, authentication patterns, and framework compatibility notes, read `references/demo-format.md`.
 
 ### Demo Pipeline
 
@@ -429,33 +429,12 @@ For demo script JSON format and field reference, read `references/demo-format.md
 6. Process audio: concatenate narration → build SFX track → select music → duck → mix all three → merge
 7. Generate WebVTT subtitles
 
-### Known Issues with Modern Frameworks
-
-- Use `waitUntil: 'load'` (NOT `networkidle`) — frameworks with HMR/WebSocket (Next.js, Vite, Nuxt) keep connections open permanently, causing `networkidle` to timeout.
-- Next.js dev overlay (`<nextjs-portal>`) intercepts pointer events. The engine removes it automatically before recording and after navigation.
-- After SPA navigation (client-side routing), cursor/zoom overlays may be destroyed. The engine re-injects them automatically when URL changes.
-
 ### Pre-flight Checks
 
 Before recording, the engine validates:
 1. All selectors exist on the initial page (warning if not found — selectors for post-navigation pages are expected to be missing)
 2. Python venv is available with edge-tts installed (auto-created if missing)
 3. Music tracks are available (downloaded or silence placeholders)
-
-### Authentication Patterns
-
-Demo mode supports pre-authenticated sessions. Two approaches:
-
-**1. Auth steps in script (username/password flows):**
-Use the `auth` array in the demo script. Steps execute before recording starts.
-
-**2. Pre-exported storageState (OAuth/SSO flows):**
-For providers like Clerk, Auth0, Firebase with OAuth (Google, GitHub SSO), Playwright cannot handle third-party OAuth popups. Instead:
-1. Log in manually in a browser
-2. Export the session via Playwright's `storageState` API or browser dev tools
-3. Pass the exported JSON via `storageState` field in the demo script
-
-The engine loads `storageState` into the browser context before navigating to the demo URL.
 
 ### Demo Reference
 

@@ -146,10 +146,16 @@ export function selectTrack(videoMeta: VideoMeta): TrackSelection {
   scoredStyles.sort((a, b) => b.score - a.score || a.priority - b.priority);
 
   // Step 4: Find tracks matching top styles
+  const topStyle = scoredStyles[0]?.name;
   for (const style of scoredStyles) {
     const matches = library.tracks.filter(t => t.style === style.name);
     if (matches.length > 0) {
       const track = pickBestByEnergy(matches, videoMeta.energy);
+      if (style.name !== topStyle) {
+        console.log(`[audio] Style "${topStyle}" has no tracks, fell back to "${style.name}"`);
+      } else {
+        console.log(`[audio] Selected style "${style.name}" (score: ${style.score})`);
+      }
       return toSelection(track);
     }
   }

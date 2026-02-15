@@ -210,7 +210,9 @@ Covers all OWASP Top 10 categories (60+ patterns). For per-category details, see
 | Logic Inversion | `active === false && isAdmin` | CWE-284 |
 | Iteration Degradation | >5 AI edits without review | N/A |
 | Complexity Spike | >30% cyclomatic increase | CWE-1120 |
-| Hallucinated Import | Non-existent package reference | CWE-829 |
+| Hallucinated Import | Non-existent package reference (static DB of ~2000 packages, JS/TS/Python/Go/Rust) | CWE-829 |
+| Diff-Aware Removal | Security pattern removed during edit (auth/crypto removal in auth files → CRITICAL) | N/A |
+| Path-Context Mismatch | Severity adjusts by file location (e.g. `service_role` key: CRITICAL in `src/components/`, MEDIUM in server code) | N/A |
 
 ### Credential Patterns
 
@@ -247,7 +249,7 @@ When a CRITICAL issue is detected (or HIGH in `--strict` mode):
 ### Non-Blocking Warnings
 
 For MEDIUM/LOW issues:
-- Warning displayed
+- Warning displayed with "Did You Mean?" secure alternatives inline
 - Operation proceeds
 - Issue logged to `.heimdall/findings.json`
 - Included in next audit report
@@ -315,51 +317,9 @@ Keep in version control:
 
 ## Reference Documentation
 
-- **OWASP Patterns**: [reference/owasp-guide.md](reference/owasp-guide.md)
-- **Secure Coding**: [reference/secure-patterns.md](reference/secure-patterns.md)
+- **OWASP Patterns**: [references/owasp-guide.md](references/owasp-guide.md)
+- **Secure Coding**: [references/secure-patterns.md](references/secure-patterns.md)
 
 ---
 
-For detailed detection examples (hardcoded credentials, logic inversions, iteration warnings), see `KNOWLEDGE.md`.
-
----
-
-For troubleshooting (hooks, false positives, performance), see `KNOWLEDGE.md`.
-
----
-
-## v2.0 Features
-
-### Diff-Aware Security Analysis
-
-Tracks removal of security patterns during edits. For detected pattern categories, see `KNOWLEDGE.md`.
-
-**Severity escalation**:
-| Scenario | Severity |
-|----------|----------|
-| Single security pattern removed | INFO |
-| 2+ patterns removed | WARNING |
-| Auth/crypto pattern removed from auth-related file | CRITICAL |
-
-### Import Existence Check
-
-Detects non-existent or typo'd package imports using a static database of ~2000 packages. For detection details, see `KNOWLEDGE.md`.
-
-**Supported languages**: JavaScript/TypeScript, Python, Go, Rust
-
-### Path-Context Severity Adjustment
-
-Severity levels now adjust based on file location. A `service_role` key is CRITICAL in client code but MEDIUM in server code.
-
-**Example path contexts**:
-```json
-{
-  "match": ["src/components/", "pages/", "client/"],
-  "severity": "CRITICAL",
-  "reason": "Service role key in client-accessible code"
-}
-```
-
-### "Did You Mean?" Suggestions
-
-When vulnerabilities are detected, Heimdall shows secure alternatives inline. For example output, see `KNOWLEDGE.md`.
+For detailed detection examples, diff-aware analysis, import checking, and troubleshooting, see `KNOWLEDGE.md`.

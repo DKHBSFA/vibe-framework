@@ -35,6 +35,15 @@ Determine the target format and load the corresponding reference:
 
 ---
 
+## Default Output Directory
+
+All generated documents are saved to `.scribe/` in the project root (already in `.gitignore`). Inform the user:
+> "Il documento verrà salvato in `.scribe/` — è già nel `.gitignore`."
+
+Only ask for a custom path if the user explicitly requests one.
+
+---
+
 ## Common Principles
 
 ### 1. Zero-Error Output

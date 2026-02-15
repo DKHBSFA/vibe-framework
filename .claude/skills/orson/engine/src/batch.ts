@@ -51,7 +51,7 @@ export function parseBatchConfig(configPath: string): BatchConfig {
     if (config.variables[i].output) {
       config.variables[i].output = resolve(configDir, config.variables[i].output!);
     } else {
-      config.variables[i].output = resolve(configDir, `output/batch-${i + 1}.mp4`);
+      config.variables[i].output = resolve(configDir, `.orson/batch-${i + 1}.mp4`);
     }
   }
 

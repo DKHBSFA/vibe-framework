@@ -138,7 +138,7 @@ export function parseHTMLString(html: string): HTMLConfig {
     speed: (videoAttrs.speed || 'normal') as SpeedPreset,
     mode: (videoAttrs.mode || 'safe') as ModeId,
     codec: (videoAttrs.codec || 'h264') as CodecId,
-    output: videoAttrs.output || './output/video.mp4',
+    output: videoAttrs.output || './.orson/video.mp4',
   };
   if (videoAttrs['entrance-speed']) {
     video['entrance-speed'] = videoAttrs['entrance-speed'] as SpeedPreset;
