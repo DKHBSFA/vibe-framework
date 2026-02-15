@@ -11,8 +11,8 @@ import { analyzeFolder } from './analyze-folder.js';
 import { analyzeUrl } from './analyze-url.js';
 import { parseHTMLFile, extractNarrationBrief, type HTMLConfig } from './html-parser.js';
 import { computeSceneTiming, type ElementTimingInput } from './timing.js';
-import { selectTrack, type VideoMeta } from './audio-selector.js';
-import { trimAndLoop, fadeInOut, mergeAudioVideo, applyDucking, concatenateNarration, normalizeLoudness, type DuckingEvent } from './audio-mixer.js';
+import { selectTrack, selectSfx, type VideoMeta } from './audio-selector.js';
+import { trimAndLoop, fadeInOut, mergeAudioVideo, applyDucking, concatenateNarration, concatenateSfx, normalizeLoudness, mixTracks, type DuckingEvent, type SfxEvent } from './audio-mixer.js';
 import { generateSRT, generateVTT } from './subtitles.js';
 
 async function main() {
@@ -411,7 +411,47 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boo
       const fadedTrack = resolve(audioDir, 'music-faded.mp3');
       await fadeInOut(processedTrack, 500, 2000, fadedTrack);
 
+      // ─── SFX from scene metadata ────────────────────────────
+      let sfxTrackPath: string | null = null;
+      {
+        const sfxEvents: SfxEvent[] = [];
+        let sceneOffset = 0;
+        for (let i = 0; i < htmlConfig.scenes.length; i++) {
+          const scene = htmlConfig.scenes[i];
+          if (scene.sfx && scene.sfx.length > 0) {
+            for (const sfxEv of scene.sfx) {
+              const sel = selectSfx(sfxEv.type);
+              if (sel) {
+                sfxEvents.push({
+                  path: sel.sfxPath,
+                  startMs: sceneOffset + sfxEv.startMs,
+                  durationMs: sfxEv.durationMs ?? sel.durationMs,
+                  gain: 0.7,
+                });
+              }
+            }
+          }
+          sceneOffset += sceneDurations[i];
+        }
+
+        if (sfxEvents.length > 0) {
+          console.log(`  SFX: ${sfxEvents.length} events from scene metadata`);
+          sfxTrackPath = resolve(audioDir, 'sfx-track.mp3');
+          await concatenateSfx(sfxEvents, totalDurationMs, sfxTrackPath);
+        }
+      }
+
       let finalAudioPath = fadedTrack;
+
+      // If we have SFX but no narration, mix music + SFX
+      if (sfxTrackPath && existsSync(sfxTrackPath)) {
+        const mixedWithSfx = resolve(audioDir, 'music-sfx-mixed.mp3');
+        await mixTracks([
+          { path: fadedTrack, gain: 1.0 },
+          { path: sfxTrackPath, gain: 1.0 },
+        ], mixedWithSfx);
+        finalAudioPath = mixedWithSfx;
+      }
 
       // ─── TTS Narration (opt-in via --narrate) ─────────────
       if (narrate) {
@@ -503,13 +543,16 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boo
                 const duckedMusic = resolve(audioDir, 'music-ducked.mp3');
                 await applyDucking(fadedTrack, duckEvents, 0.35, duckedMusic);
 
-                // Mix ducked music + narration
-                const { mixTracks } = await import('./audio-mixer.js');
-                const mixedAudio = resolve(audioDir, 'audio-mixed.mp3');
-                await mixTracks([
+                // Mix ducked music + narration + SFX
+                const narrationMixInputs: { path: string; gain: number }[] = [
                   { path: duckedMusic, gain: 1.0 },
                   { path: narrationTrack, gain: 1.8 },
-                ], mixedAudio);
+                ];
+                if (sfxTrackPath && existsSync(sfxTrackPath)) {
+                  narrationMixInputs.push({ path: sfxTrackPath, gain: 1.0 });
+                }
+                const mixedAudio = resolve(audioDir, 'audio-mixed.mp3');
+                await mixTracks(narrationMixInputs, mixedAudio);
 
                 finalAudioPath = mixedAudio;
                 console.log(`  Narration: ${narrationFiles.length} clips mixed`);

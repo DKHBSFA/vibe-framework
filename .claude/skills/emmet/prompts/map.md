@@ -4,7 +4,7 @@
 
 Analizza il 100% della codebase e produce una mappa funzionale completa: schermate, azioni utente, transizioni di stato, personas, use cases e workflow diagrams.
 
-**Output:** `.claude/docs/functional-map.md`
+**Output:** `.emmet/functional-map.md`
 
 ---
 
@@ -151,7 +151,7 @@ Includere:
 
 Usa il template in `templates/functional-map.md` per assemblare il documento finale.
 
-Salva in: `.claude/docs/functional-map.md`
+Salva in: `.emmet/functional-map.md`
 
 ---
 
@@ -170,7 +170,7 @@ Salva in: `.claude/docs/functional-map.md`
 
 Dopo aver generato/aggiornato la map, informare l'utente:
 
-> Map funzionale generata in `.claude/docs/functional-map.md`.
+> Map funzionale generata in `.emmet/functional-map.md`.
 > Trovate N schermate, N use cases, N personas.
 > Use cases non testati: N
 >

@@ -18,7 +18,7 @@ Comando unico per il ciclo completo di test e QA. Combina analisi statica e test
 
 ## Prerequisito: Functional Map
 
-`/emmet test` richiede `.claude/docs/functional-map.md` per sapere cosa testare.
+`/emmet test` richiede `.emmet/functional-map.md` per sapere cosa testare.
 
 - Se la map **esiste**: la legge e usa gli use cases come guida
 - Se la map **non esiste**: avvisa l'utente e suggerisce `/emmet map` prima
@@ -38,7 +38,7 @@ In assenza di map, il test ricade sul comportamento legacy: scan generico basato
 
 ```
 1. LEGGI MAP
-   → Carica .claude/docs/functional-map.md
+   → Carica .emmet/functional-map.md
    → Estrai lista use cases con stato test
 
 2. ANALISI STATICA
@@ -57,7 +57,7 @@ In assenza di map, il test ricade sul comportamento legacy: scan generico basato
      "Ultimo test: YYYY-MM-DD HH:MM — [backend] — PASS/FAIL"
 
 5. GENERA REPORT
-   → Assembla report finale in .claude/docs/test-report.md
+   → Assembla report finale in .emmet/test-report.md
    → Mostra summary all'utente
 ```
 
@@ -226,6 +226,6 @@ Analisi statica: N issue (C critical, H high, M medium, L low)
 Test browser: N use cases testati (P pass, F fail)
 Coverage: X% use cases testati
 
-Report: .claude/docs/test-report.md
-Map aggiornata: .claude/docs/functional-map.md
+Report: .emmet/test-report.md
+Map aggiornata: .emmet/functional-map.md
 ```

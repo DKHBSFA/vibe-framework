@@ -336,7 +336,7 @@ flowchart TD
     T --> GEN
 ```
 
-**Output:** Stack-specific patterns in `.claude/skills/emmet/stacks/[stack-name]/`
+**Output:** Stack-specific patterns in `.emmet/stacks/[stack-name]/`
 
 ---
 

@@ -41,6 +41,7 @@ innerHTML = userProvidedHtml
 - [ ] Funzioni < 50 righe
 - [ ] File < 500 righe
 - [ ] Nesting < 4 livelli
+- [ ] Cognitive complexity ≤ 15 per funzione/metodo (misura la difficoltà di comprensione umana — diversa dalla cyclomatic complexity che conta i percorsi di esecuzione)
 - [ ] Error handling presente
 - [ ] No debug code (print, console.log, etc.)
 - [ ] No magic numbers (usa costanti)

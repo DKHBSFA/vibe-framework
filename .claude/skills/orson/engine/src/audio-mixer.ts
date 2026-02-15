@@ -12,6 +12,13 @@ export interface DuckingEvent {
   target_gain: number;
 }
 
+export interface SfxEvent {
+  path: string;
+  startMs: number;
+  durationMs: number;  // how long the SFX should last (for loop or trim)
+  gain?: number;       // relative volume (default 0.7)
+}
+
 interface TrackInput {
   path: string;
   gain: number;
@@ -267,6 +274,73 @@ export async function concatenateNarration(
   }
 
   const mixInputs = filterParts.map((_, i) => `[a${i}]`).join('');
+  const filterComplex = filterParts.join(';') +
+    `;${mixInputs}amix=inputs=${filterParts.length}:duration=longest:normalize=0[out]`;
+
+  await ffmpeg([
+    ...inputs,
+    '-filter_complex', filterComplex,
+    '-map', '[out]',
+    '-t', String(totalDurationMs / 1000),
+    '-q:a', '2',
+    outputPath,
+  ]);
+}
+
+/**
+ * Concatenate SFX events at specific timestamps.
+ * - One-shot SFX (click, whoosh, success): positioned with adelay
+ * - Loopable SFX (typing): looped/trimmed to durationMs, then positioned
+ * - Individual gain per event (default 0.7)
+ */
+export async function concatenateSfx(
+  events: SfxEvent[],
+  totalDurationMs: number,
+  outputPath: string,
+): Promise<void> {
+  const validEvents = events.filter(e => existsSync(e.path));
+  if (validEvents.length === 0) {
+    // Generate silence
+    await ffmpeg([
+      '-f', 'lavfi', '-i', `anullsrc=r=44100:cl=stereo`,
+      '-t', String(totalDurationMs / 1000),
+      '-q:a', '2',
+      outputPath,
+    ]);
+    return;
+  }
+
+  // For each event, build an input with delay and optional looping
+  const inputs: string[] = [];
+  const filterParts: string[] = [];
+  let inputIdx = 0;
+
+  for (const ev of validEvents) {
+    const gain = ev.gain ?? 0.7;
+    const delayMs = Math.max(0, ev.startMs);
+
+    // Check if SFX needs looping (duration requested > SFX file duration)
+    const sfxDuration = await getAudioDurationMs(ev.path);
+    const needsLoop = ev.durationMs > sfxDuration * 1.1; // 10% tolerance
+
+    if (needsLoop) {
+      // Loop to fill requested duration, then trim
+      const loops = Math.ceil(ev.durationMs / sfxDuration) + 1;
+      inputs.push('-stream_loop', String(loops), '-i', ev.path);
+    } else {
+      inputs.push('-i', ev.path);
+    }
+
+    // Trim to requested duration, apply gain, then delay
+    const trimSec = ev.durationMs / 1000;
+    const fadeOutDur = Math.min(0.1, trimSec * 0.2); // brief fade to avoid pops
+    filterParts.push(
+      `[${inputIdx}]atrim=0:${trimSec},afade=t=out:st=${Math.max(0, trimSec - fadeOutDur)}:d=${fadeOutDur},volume=${gain},adelay=${delayMs}|${delayMs}[sfx${inputIdx}]`
+    );
+    inputIdx++;
+  }
+
+  const mixInputs = filterParts.map((_, i) => `[sfx${i}]`).join('');
   const filterComplex = filterParts.join(';') +
     `;${mixInputs}amix=inputs=${filterParts.length}:duration=longest:normalize=0[out]`;
 

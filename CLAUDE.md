@@ -36,6 +36,8 @@
 | Record session learnings | Create `.claude/docs/session-notes/[date]-[topic].md` |
 | Log a request | Add entry to `.claude/docs/request-log.md` |
 | Check request history | Read `.claude/docs/request-log.md` |
+| See context usage | Status bar (automatic via Morpheus) |
+| Adjust context thresholds | Edit `.claude/morpheus/config.json` |
 
 ---
 
@@ -65,7 +67,7 @@ ls .claude/docs/specs/
 **1. Greet and introduce:**
 > "Ciao! Questo progetto usa il **Claude Development Framework** — un sistema operativo che mi aiuta a lavorare meglio.
 >
-> Il framework include skill specializzate per UI, development patterns, sicurezza, SEO/copywriting, video e audio.
+> Il framework include skill specializzate per UI, testing, sicurezza, SEO/copywriting, CRO, video, documenti Office/PDF e manutenzione skill.
 >
 > Per capire come funziona, leggi `.claude/README.md`. Lì trovi tutto: setup, comandi, skill disponibili."
 
@@ -213,6 +215,7 @@ Create `.claude/docs/specs/migration-[name].md` with:
 | Leave backwards-compat shims | If unused, delete completely. No `_vars`, no `// removed` comments |
 | Reimplemento codice che esiste già | In plan mode, cercare funzioni simili nel registry e nel codebase (grep) PRIMA di scrivere codice nuovo |
 | Insisto su un approccio fallimentare | Dopo 2 tentativi falliti, FERMARMI. Creare nuova spec, ripianificare da zero |
+| Ignore context warnings | Act on Morpheus messages immediately — they trigger for a reason |
 
 ---
 
@@ -266,5 +269,25 @@ At the end of complex sessions (multi-file changes, debugging, refactoring), cre
 
 **The human's job:** Tell me what to build, approve specs, review output.
 **My job:** Investigate thoroughly, implement correctly, track everything.
+
+---
+
+## Morpheus: Context Awareness
+
+**Location:** `.claude/morpheus/`
+
+Morpheus monitors context window usage and injects instructions when thresholds are crossed.
+
+| Threshold | Tier | Action |
+|-----------|------|--------|
+| 60% | `triage` | Assess: can I finish the current task? If not, session note + registry + inform user |
+| 80% | `save-state` | Update registry, session note, request-log. Inform user, suggest /compact |
+| 93% | `halt` | Stop. Only current edit. Inform user immediately |
+
+**Config:** `.claude/morpheus/config.json` — adjust thresholds, messages, repeat mode.
+
+**Status bar:** `ctx ████████░░░░░░░░░░░░ 42%` — turns red when any threshold exceeded.
+
+**Requirement:** `jq` must be installed.
 
 *This is my operating system. I follow it.*

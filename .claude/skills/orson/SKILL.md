@@ -345,6 +345,32 @@ Tracks live in `engine/audio/tracks/` and SFX in `engine/audio/sfx/`. The catalo
 
 Run `engine/audio/download-library.sh` to bootstrap placeholder tracks. Replace with real CC0 audio from Pixabay, Mixkit, or similar.
 
+### Contextual SFX
+
+Sound effects are automatically added based on video actions. Available SFX types: `ui-click`, `typing-loop`, `transition`, `scene-transition`, `success`.
+
+**Demo mode:** SFX are auto-generated from actions (click → click sound, fill → typing loop, navigate → transition). Control via the `sfx` field in the demo script:
+
+```json
+{
+  "sfx": {
+    "enabled": true,
+    "volume": 0.7,
+    "autoFromActions": true
+  }
+}
+```
+
+Per-step override with `"sfx": "ui-click"` (explicit) or `"sfx": "none"` (silence).
+
+**HTML video:** Add `sfx` attribute to `@scene` comments:
+```html
+<!-- @scene name="Demo" sfx="click@1500,typing@2000:3000,whoosh@5000" -->
+```
+Format: `type@startMs` or `type@startMs:durationMs`. Timestamps are relative to scene start.
+
+SFX are mixed at gain 0.7 (below narration at 1.0) and go through the same -14 LUFS normalization.
+
 ---
 
 ## Demo Mode (`/orson demo`)
@@ -397,9 +423,10 @@ For demo script JSON format and field reference, read `references/demo-format.md
 1. Parse + validate script (Zod)
 2. Generate narration brief → run `narration_generator.py` → MP3 files (loudness normalized to -14 LUFS by audio-mixer.ts)
 3. Build narration-first timeline (zoom → narration → action)
+3.5. Build SFX track from actions (auto) or explicit per-step overrides
 4. Launch Playwright, pre-flight selector validation, execute auth, record frames
 5. Encode frames to video (FFmpeg)
-6. Process audio: concatenate narration → select music → duck → mix → merge
+6. Process audio: concatenate narration → build SFX track → select music → duck → mix all three → merge
 7. Generate WebVTT subtitles
 
 ### Known Issues with Modern Frameworks

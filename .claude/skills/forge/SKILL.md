@@ -68,7 +68,7 @@ Semantic audit of all skills. Produces a categorized plan — does not modify fi
    - **Dedup** — Cross-skill duplicate content to consolidate
 5. **Generate execution plan** ordered by impact
 
-**Output:** `.claude/docs/forge-audit.md` — Report with metrics, per-skill analysis, and execution plan.
+**Output:** `.forge/forge-audit.md` — Report with metrics, per-skill analysis, and execution plan.
 
 **Report format:**
 ```markdown
@@ -192,6 +192,6 @@ For the full quality checklist, read `references/quality-checklist.md`.
 ## Integration
 
 - After `/forge create`, the new skill is registered in the registry
-- `/forge audit` reports are saved to `.claude/docs/forge-audit.md`
+- `/forge audit` reports are saved to `.forge/forge-audit.md`
 - `/forge fix` reads from `forge-audit.md` and modifies skill files directly
 - Trimmed content generates KNOWLEDGE.md files per skill (human documentation)
