@@ -84,7 +84,7 @@ ls .claude/docs/specs/
 
 Skip sections that don't apply. Then run `/adapt-framework` to generate stack-specific patterns.
 
-For projects with existing UI, also run `/seurat extract` then `/seurat analyze-project`.
+For projects with existing UI, also run `/seurat extract` then `/seurat map`.
 
 ---
 
