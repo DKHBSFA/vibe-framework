@@ -12,7 +12,7 @@ Three-stage validation: Pre-Generation → During → Post-Generation.
 
 | Check | Condition | Action |
 |-------|-----------|--------|
-| system.md exists | `.seurat/system.md` present | If missing → run `/seurat establish` |
+| tokens.css exists | `.seurat/tokens.css` present | If missing → run `/seurat setup` or `/seurat extract` |
 | Direction defined | `Personality:` field populated | If missing → BLOCK |
 | Tokens complete | Spacing, colors, typography defined | If incomplete → WARN |
 
@@ -122,7 +122,7 @@ function validateComponent(code) {
 | Rule | Check | Severity |
 |------|-------|----------|
 | Button height drift | Heights vary > 2px | WARN |
-| Color palette drift | Color not in system.md | WARN |
+| Color palette drift | Color not in tokens.css | WARN |
 | Spacing drift | Value not in scale | WARN |
 | Generic font detected | Banned font in code | **BLOCK** |
 | Missing focus state | Interactive without :focus-visible | **BLOCK** |
@@ -327,113 +327,6 @@ Read the CSS custom property names. If they sound generic → they don't belong 
 ### On Failure
 
 If any test fails: return to Phase 3 (BUILD) and rebuild the generic part. Don't patch — reconstruct the decision.
-
----
-
-## Validation Report Format
-
-```markdown
-# UI Craft Validation Report
-
-## Summary
-- **BLOCK violations**: 2
-- **WARN violations**: 5
-- **INFO notices**: 3
-
-## BLOCK (Must Fix)
-
-### 1. Missing Focus State
-**File**: components/Button.tsx:45
-**Element**: `.btn-secondary`
-**Issue**: No `:focus-visible` styles defined
-**Fix**: Add focus ring
-```css
-.btn-secondary:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-```
-
-### 2. Touch Target Too Small
-**File**: components/IconButton.tsx:12
-**Element**: `.icon-btn`
-**Size**: 32x32px (minimum 44x44px)
-**Fix**: Increase size or add padding
-```css
-.icon-btn {
-  min-width: 44px;
-  min-height: 44px;
-}
-```
-
-## WARN (Should Fix)
-
-### 1. Color Not in System
-**File**: pages/Dashboard.tsx:78
-**Color**: `hsl(215 60% 45%)`
-**Nearest system color**: `--color-accent` (hsl(220 70% 50%))
-**Fix**: Use system token
-
-### 2. Off-Grid Spacing
-**File**: components/Card.tsx:23
-**Value**: `padding: 18px`
-**Grid**: 8px base
-**Nearest**: 16px or 24px
-**Fix**: Use `var(--space-2)` or `var(--space-3)`
-
-## Polish Suggestions
-
-### Background
-Current: Flat white (`#ffffff`)
-Suggested: Subtle gradient
-```css
-background: linear-gradient(135deg, hsl(220 20% 98%), hsl(220 15% 96%));
-```
-
-### Typography
-- Heading weight could be bolder (currently 600, suggest 800)
-- Consider tighter letter-spacing on hero text
-
-### Motion
-- No page load animation detected
-- Consider adding staggered reveal for card grid
-```
-
----
-
-## Automated Validation Script
-
-```bash
-#!/bin/bash
-# .seurat/scripts/validate.sh
-
-echo "UI Craft Validation"
-echo "==================="
-
-# Check system.md exists
-if [ ! -f ".seurat/system.md" ]; then
-  echo "BLOCK: system.md not found. Run /seurat establish"
-  exit 1
-fi
-
-# Check for banned fonts
-BANNED_FONTS="Inter|Roboto|Arial|Helvetica|sans-serif"
-if grep -rE "font-family:.*($BANNED_FONTS)" --include="*.css" --include="*.tsx" --include="*.jsx" .; then
-  echo "BLOCK: Banned font detected"
-fi
-
-# Check for magic numbers in spacing
-if grep -rE "padding:\s*[0-9]+px" --include="*.css" .; then
-  echo "WARN: Raw px values in padding (use CSS variables)"
-fi
-
-# Check for missing focus styles
-if ! grep -rE ":focus-visible|:focus" --include="*.css" .; then
-  echo "BLOCK: No focus styles found"
-fi
-
-echo "Validation complete"
-```
 
 ---
 
