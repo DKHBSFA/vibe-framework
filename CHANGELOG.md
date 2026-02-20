@@ -22,7 +22,7 @@ Initial versioned release. The framework was already functional before versionin
 
 ### Added
 - VERSION file with semantic versioning
-- Version display in framework.sh installer banner
+- Version display in vibe-framework.sh installer banner
 - Version comparison on update (detects "already up to date")
 - `.framework-version` marker written to target projects
 

@@ -22,7 +22,7 @@ An operating system for Claude Code with 8 specialized skills and context awaren
 ```bash
 git clone <this-repo> ~/vibe-framework
 cd ~/vibe-framework
-./framework.sh /path/to/your/project
+./vibe-framework.sh /path/to/your/project
 ```
 
 The script copies `CLAUDE.md` + `.claude/` into your project, creates `settings.local.json`, output directories, and updates `.gitignore`.
@@ -32,7 +32,7 @@ The script copies `CLAUDE.md` + `.claude/` into your project, creates `settings.
 ```bash
 cd ~/vibe-framework
 git pull
-./framework.sh /path/to/your/project
+./vibe-framework.sh /path/to/your/project
 ```
 
 Framework files (skills, workflows, checklists) are overwritten. User data (registry, decisions, specs, session-notes) is preserved. A backup is created before any changes.

@@ -20,11 +20,23 @@ When I make a choice that affects future work, I record it here. This prevents m
 
 ## Decisions
 
-### Manual GitHub Releases via gh CLI
+### Automated GitHub Releases via GitHub Actions
 **Date:** 2026-02-20
-**Decision:** Releases are created manually with `gh release create`, no CI/CD automation.
-**Why:** The framework is a collection of files copied by `framework.sh`, not a library with build/test pipelines. GitHub Actions would add YAML maintenance overhead for zero benefit. `gh` CLI works directly from the terminal and Claude Code can assist with releases.
-**Affects:** Release process documented in `RELEASING.md`. No `.github/workflows/` directory. Version bumps are manual (edit `VERSION` + `CHANGELOG.md`).
+**Decision:** Releases are automated via GitHub Actions. Pushing a tag matching `v*` triggers `.github/workflows/release.yml`, which verifies `VERSION` matches the tag and creates a GitHub Release with notes extracted from `CHANGELOG.md`.
+**Why:** Eliminates manual `gh release create` step. The workflow is minimal (single job, no build/test) so maintenance overhead is negligible.
+**Affects:** Release process: update `VERSION` + `CHANGELOG.md` → commit → `git tag vX.Y.Z && git push && git push origin vX.Y.Z`. The Action handles the rest.
+
+### Installer script renamed to vibe-framework.sh
+**Date:** 2026-02-20
+**Decision:** Renamed `framework.sh` to `vibe-framework.sh`.
+**Why:** Consistent with the project rename to VIBE Framework. Makes the script immediately identifiable.
+**Affects:** All docs updated. The script uses `$0` internally so no logic changes needed.
+
+### Automatic update check in vibe-framework.sh
+**Date:** 2026-02-20
+**Decision:** The installer script checks the GitHub API for the latest release on startup and warns the user if a newer version is available.
+**Why:** Users clone the repo once and may forget to `git pull`. The check uses `curl` with a 3-second timeout, so it's transparent when offline.
+**Affects:** Requires network access for the check (gracefully degrades if unavailable).
 
 ### Project renamed to VIBE Framework
 **Date:** 2026-02-20

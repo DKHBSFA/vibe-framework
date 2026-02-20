@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# framework.sh — Install or update the VIBE Framework in a target project
+# vibe-framework.sh — Install or update the VIBE Framework in a target project
 #
-# Usage: ./framework.sh /path/to/target/project [--dry-run]
+# Usage: ./vibe-framework.sh /path/to/target/project [--dry-run]
 #
 # Install (no .claude/ in target): copies everything, creates settings, output dirs, .gitignore
 # Update (.claude/ exists in target): overwrites framework files, preserves user data, creates backup
@@ -96,6 +96,29 @@ if [ -f "$SOURCE_DIR/VERSION" ]; then
   FRAMEWORK_VERSION="$(tr -d '[:space:]' < "$SOURCE_DIR/VERSION")"
 else
   FRAMEWORK_VERSION="unknown"
+fi
+
+# --- Check for updates ---
+
+check_for_updates() {
+  local latest
+  latest=$(curl -sf --max-time 3 \
+    "https://api.github.com/repos/DKHBSFA/vibe-framework/releases/latest" \
+    | grep -o '"tag_name": *"[^"]*"' | head -1 | grep -o 'v[^"]*')
+
+  if [ -n "$latest" ]; then
+    local latest_clean="${latest#v}"
+    if [ "$latest_clean" != "$FRAMEWORK_VERSION" ]; then
+      echo ""
+      echo "  Nuova versione disponibile: $latest (attuale: v${FRAMEWORK_VERSION})"
+      echo "  Aggiorna con: cd $(dirname "$0") && git pull"
+      echo ""
+    fi
+  fi
+}
+
+if [ "$FRAMEWORK_VERSION" != "unknown" ]; then
+  check_for_updates 2>/dev/null || true
 fi
 
 if [ -z "$TARGET_DIR" ]; then
