@@ -18,7 +18,7 @@ Un framework operativo per lavorare con Claude su progetti software, con skill s
 
 **1. Installa il framework** nel tuo progetto:
 ```bash
-./framework.sh /path/to/tuo-progetto
+./vibe-framework.sh /path/to/tuo-progetto
 ```
 Lo script copia `CLAUDE.md` + `.claude/`, crea `settings.local.json`, directory output e aggiorna `.gitignore`.
 
@@ -50,7 +50,7 @@ Per aggiornare il framework mantenendo i tuoi dati (registry, decisions, specs, 
 ```bash
 cd ~/path/to/framework-source
 git pull
-./framework.sh /path/to/tuo-progetto
+./vibe-framework.sh /path/to/tuo-progetto
 ```
 
 Lo script:
@@ -172,7 +172,7 @@ progetto/
 
 1. Installa il framework:
    ```bash
-   ./framework.sh /path/to/tuo-progetto
+   ./vibe-framework.sh /path/to/tuo-progetto
    ```
 
 2. **Configura le skill in base al tipo di progetto:**
@@ -208,7 +208,7 @@ Analizza lo stack (Node, Python, Go, etc.) e genera pattern specifici.
 
 1. Installa il framework:
    ```bash
-   ./framework.sh /path/to/tuo-progetto
+   ./vibe-framework.sh /path/to/tuo-progetto
    ```
 
 2. **Obbligatorio:** Fai popolare il registry:

@@ -4,7 +4,6 @@ How to create a new release of the VIBE Framework.
 
 ## Prerequisites
 
-- [GitHub CLI](https://cli.github.com/) (`gh`) installed and authenticated
 - Push access to the repository
 
 ## Steps
@@ -29,20 +28,10 @@ How to create a new release of the VIBE Framework.
    git push && git push origin vX.Y.Z
    ```
 
-5. **Create GitHub release:**
-   ```bash
-   gh release create vX.Y.Z --title "vX.Y.Z" --notes-file - <<'EOF'
-   Paste release notes here (copy from CHANGELOG.md).
-   EOF
-   ```
-
-   Or with auto-generated notes from commits:
-   ```bash
-   gh release create vX.Y.Z --title "vX.Y.Z" --generate-notes
-   ```
+The GitHub Action (`.github/workflows/release.yml`) automatically creates the GitHub Release with notes extracted from CHANGELOG.md.
 
 ## Version numbering
 
-- **MAJOR** (1.0.0): Breaking changes to framework.sh behavior or CLAUDE.md contract
+- **MAJOR** (1.0.0): Breaking changes to vibe-framework.sh behavior or CLAUDE.md contract
 - **MINOR** (0.X.0): New skills, new features, significant improvements
 - **PATCH** (0.0.X): Bug fixes, documentation updates, minor tweaks

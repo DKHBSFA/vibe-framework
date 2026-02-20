@@ -32,6 +32,7 @@ Registro incrementale di tutte le richieste gestite dal framework.
 |---|------|-----|-----------|-------------|-----------------|-------|
 | 1 | 2026-02-19 | - | Feature | Aggiungere sistema di versioning al framework | [framework-versioning.md](specs/framework-versioning.md) | completato |
 | 2 | 2026-02-20 | - | Feature | Rename a VIBE Framework + GitHub Releases | - | completato |
+| 3 | 2026-02-20 | - | Feature | Release automatiche (GitHub Actions), version check, rename script a vibe-framework.sh | - | completato |
 
 ---
 
