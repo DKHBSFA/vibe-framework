@@ -5,6 +5,17 @@ All notable changes to the VIBE Framework are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-02-23
+
+### Added
+- **Orson v6 runtime** — Spring physics (`SP()`), Perlin noise (`N()`), SVG draw (`D()`), particle system (`P()`) as inline JS runtime
+- Automated GitHub Releases via GitHub Actions (`v*` tag trigger)
+- Automatic update check in `vibe-framework.sh` (GitHub API with 3s timeout)
+
+### Changed
+- Installer script renamed from `framework.sh` to `vibe-framework.sh`
+- Cleaned repo for distribution: updated docs, removed dev artifacts
+
 ## [0.2.0] - 2026-02-20
 
 ### Changed
