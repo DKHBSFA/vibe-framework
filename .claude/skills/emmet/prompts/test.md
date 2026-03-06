@@ -49,10 +49,30 @@ In assenza di map, il test ricade sul comportamento legacy: scan generico basato
    → Documenta issue trovati
 
 3. TEST BROWSER
-   → Per ogni use case nella map:
-     a. Genera/aggiorna test script se non esiste
-     b. Esegui test (Playwright o BrowserMCP)
-     c. Cattura evidenze (screenshot, log, errori)
+   → a. DETECT STACK — Identifica framework del progetto target
+        (Next.js, Vite, Express, SvelteKit, etc.)
+        Determina: webServer command, waitForPage() logic, baseURL, porta
+   → b. SCAFFOLD — Se e2e/ non esiste, genera struttura completa:
+        - e2e/fixtures.ts (worker-scoped single-window fixture)
+        - e2e/helpers.ts (waitForPage, apiFetch, screenshot — adattati allo stack)
+        - playwright.config.ts (sequential, single worker, no retries, env targeting)
+        - Se map ha auth use cases:
+          - e2e/global-setup.ts (session caching con flusso auth del progetto)
+          - Aggiungere .auth/ a .gitignore
+        - e2e/screenshots/ (directory)
+   → c. GENERA TEST — Per ogni area funzionale nella map:
+        - Raggruppa UC correlati in un test file (es. auth.spec.ts, dashboard.spec.ts)
+        - Entita ripetute nella map → test parametrizzati (for loop su array)
+        - Flussi alternativi → test case separati
+        - API endpoints nella map → apiFetch() tests per data integrity
+        - Se map indica responsive → gruppo dedicato viewport (375x812, 768x1024)
+        - Se map indica error flows → gruppo dedicato (404, bad params, unauthorized)
+        - TUTTI i file importano da ./fixtures, MAI da @playwright/test
+        - Consultare Completeness Checklist in testing/dynamic.md per categorie mancanti
+   → d. HOOKS — Ogni file include afterEach/afterAll per report real-time
+        (pass/fail counter, screenshot automatico su failure, summary)
+   → e. ESEGUI — npx playwright test (sequential, single worker)
+   → f. CATTURA — Evidenze generate automaticamente dai hooks in e2e/report.md
 
 4. UNIT TEST
    → Per ogni pure function nella map (ordine P1 → P2 → P3):
@@ -88,10 +108,13 @@ Solo step 2. Non richiede browser, non richiede map (ma la usa se disponibile pe
 Solo step 3. Richiede map per sapere quali flussi testare.
 
 ```
-1. LEGGI MAP → estrai use cases
-2. TEST BROWSER → esegui test per ogni use case
-3. AGGIORNA MAP → stato test
-4. GENERA REPORT → solo sezione browser test
+1. LEGGI MAP → estrai use cases, entita ripetute, API endpoints, flag responsive/error
+2. DETECT STACK → identifica framework progetto target per adattare config e helpers
+3. SCAFFOLD → genera e2e/ structure se non esiste (fixtures, helpers, config, global-setup)
+4. GENERA TEST → test files per area funzionale (vedi testing/dynamic.md per pattern)
+5. ESEGUI → npx playwright test (sequential, single worker)
+6. AGGIORNA MAP → stato test per ogni UC
+7. GENERA REPORT → sezione browser test (assemblata dal report hook output in e2e/report.md)
 ```
 
 ### `/emmet test --unit`
@@ -183,14 +206,17 @@ Segue le regole complete in `testing/dynamic.md`. Integrazione con map:
 
 ```
 1. Leggi UC-NNN → estrai flusso principale + flussi alternativi
-2. Genera test script Playwright basato su:
-   - Screen di partenza (precondizioni)
-   - Sequenza azioni dal flusso principale
-   - Assertions su ogni step (elemento visibile, stato corretto)
+2. Raggruppa UC per area funzionale (auth, navigation, CRUD, etc.)
+3. Genera test file per gruppo con:
+   - Import da ./fixtures (worker-scoped page, NON default)
+   - waitForPage() dopo ogni navigazione (non solo networkidle)
+   - apiFetch() per verificare dati post-azione
    - Flussi alternativi come test case separati
-3. Esegui
-4. Cattura evidenze su failure
-5. Aggiorna stato nella map
+   - Entita ripetute → test parametrizzati (for loop su array)
+   - afterEach/afterAll hooks per report real-time
+4. Esegui (sequential, single worker)
+5. Evidenze catturate automaticamente dagli hooks
+6. Aggiorna stato nella map
 ```
 
 ### Assertions Strategy

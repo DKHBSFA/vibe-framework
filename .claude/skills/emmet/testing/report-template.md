@@ -59,20 +59,38 @@ Template per generare report bug con `/emmet report`.
 
 ---
 
-## Journey Test Results
+## Browser Test Results
+
+> Questa sezione e generata automaticamente dagli afterEach/afterAll hooks
+> durante l'esecuzione dei test. Il report raw si trova in `e2e/report.md`.
+
+### Test Results (dal report hook)
+
+- PASS: UC-001 Login flow (1.2s)
+- PASS: UC-002 Dashboard load (0.8s)
+- FAIL #1: UC-003 Profile update
+  - **Durata:** 3.4s
+  - **Errore:** `Expected "saved" but got timeout`
+  - **Screenshot:** ![fail-1](e2e/screenshots/fail-1.png)
 
 ### Summary
 
-| Journey | Status | Issues Found |
-|---------|--------|--------------|
-| [Flow 1] | PASS/FAIL | N |
-| [Flow 2] | PASS/FAIL | N |
+| | Count |
+|---|---|
+| Passed | N |
+| Failed | N |
+| Total | N |
+| Duration | Ns |
 
-### Failed Tests
+### Issues Found
+
+- UC-003 Profile update: Expected "saved" but got timeout
+
+### Failed Tests (dettaglio)
 
 | ID | Journey | Step | Expected | Actual |
 |----|---------|------|----------|--------|
-| JRN-001 | Login | Submit form | Redirect to dashboard | Error message |
+| JRN-001 | UC-003 Profile update | Submit form | Success message | Timeout |
 
 ---
 
@@ -193,6 +211,8 @@ Template per generare report bug con `/emmet report`.
 - **Browser(s):** [browsers tested]
 - **OS:** [operating system]
 - **Test Environment:** [local/staging/production]
+- **Test Architecture:** single-window fixture, sequential execution
+- **E2E Target:** [local dev / production URL]
 
 ---
 
