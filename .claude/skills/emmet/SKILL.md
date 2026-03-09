@@ -180,6 +180,7 @@ Audit del codebase per debito tecnico strutturale.
 
 2. **Export orfani**
    - Funzioni/costanti esportate ma mai importate
+   - **CRITICO:** Cercare export nel `[path]` specificato, ma cercare import nell'INTERO codebase (escluso `node_modules/`, `.next/`, `dist/`, `build/`). Un export usato da `scripts/`, file root, o altre directory fuori scope NON è orfano
 
 3. **Import non usati**
    - Import dichiarati ma mai referenziati
@@ -196,7 +197,7 @@ Audit del codebase per debito tecnico strutturale.
 **Procedura:**
 1. Rileva stack (estensioni file)
 2. Scan duplicazioni
-3. Scan export/import
+3. Scan export/import (**scope import: intero codebase**, non solo `[path]`)
 4. Scan pattern ripetuti
 5. Scan file size
 6. Calcola Debt Rating (vedi `templates/techdebt-report.md` per formula e soglie)
