@@ -11,11 +11,13 @@ Checklists and requirements for traditional search engine optimization.
 - [ ] XML sitemap submitted to Google & Bing
 - [ ] Clean internal linking structure
 - [ ] No orphan pages
+- [ ] External links present (≥1 for landing pages, ≥2 for articles) — zero external links is a ranking signal failure
+- [ ] OpenGraph tags complete (ALL 6: og:title, og:description, og:image, og:url, og:type, og:site_name)
 
 ## Indexability Checklist
 
 - [ ] Canonical tags present on EVERY page (self-referencing, full absolute URL)
-- [ ] WWW canonicalization configured (301 redirect)
+- [ ] WWW canonicalization configured (301 redirect www↔non-www)
 - [ ] XML sitemap exists, accessible, submitted to search engines
 - [ ] robots.txt exists with sitemap reference
 - [ ] Hreflang for international content
@@ -23,6 +25,8 @@ Checklists and requirements for traditional search engine optimization.
 - [ ] No unintentional noindex tags
 - [ ] Mobile-friendly (responsive design)
 - [ ] Core Web Vitals passing (LCP, FID, CLS)
+- [ ] Content freshness signals present (og:updated_time OR article:modified_time + Last-Modified header)
+- [ ] All links verified reachable (no broken/placeholder URLs)
 
 ## Bing Optimization (Critical for ChatGPT)
 

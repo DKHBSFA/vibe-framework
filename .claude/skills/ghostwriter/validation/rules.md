@@ -18,11 +18,11 @@ Apply relevant rules after generation. Report pass/fail for each.
 
 ## SEO Rules
 
-### SEO-001: Title Tag Length
-- **Check**: Count characters in title tag (count EVERY character including spaces and pipes)
-- **Pass**: 30-55 characters (hard max: 60. NEVER exceed 60.)
-- **Fail**: Truncate or expand. If over 55, rewrite — do NOT just cut words
-- **Common mistake**: Brand name repeated (e.g. "Brand | Tagline | Brand"). Verify brand appears ONCE max
+### SEO-001: Title Tag Length & Brand Duplication
+- **Check**: Count characters in title tag (count EVERY character including spaces and pipes). Also check brand name occurrences.
+- **Pass**: 30-55 characters (hard max: 60. NEVER exceed 60.) AND brand name appears AT MOST once.
+- **Fail**: Truncate or expand. If over 55, rewrite — do NOT just cut words. If brand appears 2+ times, remove duplicates immediately — this is an auto-fail.
+- **Common mistake**: Brand name repeated (e.g. "Free Language Courses — Polyglot You | Polyglot You"). Verify brand appears ONCE max. Check for brand in both the title text and the separator suffix — they often duplicate.
 
 ### SEO-002: Title Keyword Position
 - **Check**: Position of primary keyword in title
@@ -251,20 +251,21 @@ Apply relevant rules after generation. Report pass/fail for each.
 - **Pass**: Alt text describes image, includes keyword if natural
 - **Fail**: Rewrite alt text
 
-### TECH-003: No Broken Internal Links
-- **Check**: Internal links point to existing pages
-- **Pass**: All internal links resolve
-- **Fail**: Fix or remove broken links
+### TECH-003: No Broken Links
+- **Check**: ALL links (internal AND external) point to existing, reachable pages
+- **Pass**: Every link in generated content uses a real, verified URL. No placeholder URLs (example.com, #, javascript:void). No known-dead domains.
+- **Fail**: Replace broken/placeholder links with real URLs, or remove the link. For external links, prefer well-known authoritative domains (Wikipedia, official docs, industry standards bodies) that are unlikely to break.
 
 ### TECH-004: Canonical Tag
 - **Check**: Canonical tag present in `<head>`
 - **Pass**: Self-referencing canonical present with full absolute URL
 - **Fail**: Add `<link rel="canonical" href="https://..." />`. This is MANDATORY — never skip.
 
-### TECH-005: Open Graph Tags
-- **Check**: All required OG tags present
-- **Pass**: og:title, og:description, og:image, og:url, og:type, og:site_name ALL present
-- **Fail**: Add ALL missing OG tags. Partial OG is worse than none — social previews break with incomplete tags.
+### TECH-005: Open Graph Tags (BLOCKER)
+- **Check**: All 6 required OG tags present AS GENERATED HTML CODE in the deliverable
+- **Pass**: og:title, og:description, og:image, og:url, og:type, og:site_name ALL present as `<meta property="og:..." />` tags in the delivered `<head>` block. og:image MUST have a real URL or an explicit `[TODO: provide image URL — 1200x630px]` placeholder that the user cannot miss.
+- **Fail**: Generate the complete OG tag block immediately. Do NOT just list "add OG tags" in a checklist — output the actual HTML. This is a BLOCKER: content cannot be delivered without complete OG tags.
+- **Why BLOCKER**: Incomplete OG causes broken social previews on Facebook, LinkedIn, Twitter, WhatsApp. This is visible to end users and damages brand perception.
 
 ### TECH-006: XML Sitemap
 - **Check**: XML sitemap exists and is accessible
@@ -286,6 +287,22 @@ Apply relevant rules after generation. Report pass/fail for each.
 - **Pass**: No unintentional noindex directives present
 - **Fail**: Remove noindex tag/header. Common in staging deployments that go live without removing it.
 
+### TECH-010: Content Freshness Signals (BLOCKER)
+- **Check**: Deliverable includes content freshness meta tags
+- **Pass**: At least ONE of the following is present in the delivered `<head>` block:
+  - `<meta property="article:modified_time" content="YYYY-MM-DDTHH:MM:SSZ" />` (for articles/blog posts)
+  - `<meta property="og:updated_time" content="YYYY-MM-DDTHH:MM:SSZ" />` (universal)
+  - `<meta property="article:published_time" content="YYYY-MM-DDTHH:MM:SSZ" />` (for first publish)
+  - AND the deliverable includes a note recommending `Last-Modified` HTTP header configuration
+- **Fail**: Generate the freshness meta tags with current date. Add a "Server Configuration" note explaining how to set `Last-Modified` header (Next.js: `res.setHeader('Last-Modified', ...)`, Vercel: automatic for static, nginx: `add_header Last-Modified`).
+- **Why BLOCKER**: Search engines use freshness signals to rank content. Without them, content appears stale even when recently updated. Rank Math and similar tools flag this as a warning.
+
+### TECH-011: Link Integrity
+- **Check**: All URLs in generated content are real and reachable
+- **Pass**: No placeholder URLs (example.com, placeholder.com, yourdomain.com, #, javascript:void). All external links use HTTPS. All URLs follow known-valid patterns.
+- **Fail**: Replace placeholder URLs with real, authoritative alternatives. If the real URL is unknown, use explicit `[TODO: replace with real URL for X]` that the user cannot miss. NEVER output a fake URL that looks real.
+- **Post-deploy note**: Include reminder for user to run a broken link scan after deployment (e.g., `npx broken-link-checker [url]` or online tools).
+
 ---
 
 ## Validation Scoring
@@ -299,10 +316,13 @@ Apply relevant rules after generation. Report pass/fail for each.
 - **GEO Score**: Points earned / 14
 - **Copy Score**: Points earned / 10
 - **Schema Score**: Points earned / 5
-- **Tech Score**: Points earned / 9
+- **Tech Score**: Points earned / 11
 
 ### Overall Score
-Total points / 50 × 100 = Percentage
+Total points / 52 × 100 = Percentage
+
+### BLOCKER Rules
+Rules marked as **(BLOCKER)** halt delivery. If ANY blocker fails, the deliverable MUST include the fix as generated code — not just a checklist item. Current blockers: TECH-005 (OG tags), TECH-010 (Content Freshness).
 
 ### Quality Thresholds
 - **90-100%**: Production ready
@@ -329,8 +349,8 @@ Total points / 50 × 100 = Percentage
 | GEO | X | 14 | X% |
 | Copy | X | 10 | X% |
 | Schema | X | 5 | X% |
-| Tech | X | 9 | X% |
-| **Total** | **X** | **50** | **X%** |
+| Tech | X | 11 | X% |
+| **Total** | **X** | **52** | **X%** |
 
 ### Failed Rules
 

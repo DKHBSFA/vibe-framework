@@ -249,21 +249,46 @@ Available generation prompts:
 
 **Every page/site MUST have these. If any are missing after generation, flag as BLOCKER before delivery.**
 
-| Requirement | What | Common failure |
-|-------------|------|----------------|
-| Canonical tag | `<link rel="canonical" href="https://..." />` in `<head>` | Missing entirely |
-| Schema.org | JSON-LD in `<head>` matching content type | Missing entirely |
-| OpenGraph (ALL 6) | og:title, og:description, og:image, og:url, og:type, og:site_name | Partial or missing |
-| XML Sitemap | /sitemap.xml accessible | Missing entirely |
-| robots.txt | /robots.txt with sitemap reference | Missing entirely |
-| WWW canonicalization | 301 redirect www↔non-www | Not configured |
-| External links | ≥1 for landing pages, ≥2 for articles | Zero external links |
-| Internal links | ≥8 for landing pages | Below minimum count |
-| H2 sections | ≥4 for landing pages/homepages | Only 2 sections |
-| Title length | 30-55 chars (hard max 60) | Exceeds 60 chars, brand duplication |
-| Meta description | 120-155 chars (hard max 158) | Exceeds 158 chars |
+| Requirement | What | Common failure | Severity |
+|-------------|------|----------------|----------|
+| Canonical tag | `<link rel="canonical" href="https://..." />` in `<head>` | Missing entirely | BLOCKER |
+| Schema.org | JSON-LD in `<head>` matching content type | Missing entirely | BLOCKER |
+| OpenGraph (ALL 6) | og:title, og:description, og:image, og:url, og:type, og:site_name | Partial or missing | BLOCKER |
+| Content freshness | `og:updated_time` or `article:modified_time` in `<head>` | Missing entirely | BLOCKER |
+| XML Sitemap | /sitemap.xml accessible | Missing entirely | BLOCKER |
+| robots.txt | /robots.txt with sitemap reference | Missing entirely | BLOCKER |
+| WWW canonicalization | 301 redirect www↔non-www | Not configured | BLOCKER |
+| External links | ≥1 for landing pages, ≥2 for articles | Zero external links | BLOCKER |
+| Internal links | ≥8 for landing pages | Below minimum count | WARNING |
+| H2 sections | ≥4 for landing pages/homepages | Only 2 sections | WARNING |
+| Title length | 30-55 chars (hard max 60), brand appears ONCE max | Exceeds 60 chars, brand duplication | BLOCKER |
+| Meta description | 120-155 chars (hard max 158) | Exceeds 158 chars | WARNING |
+| Link integrity | No placeholder/broken URLs in deliverable | example.com, #, dead links | BLOCKER |
 
-**Enforcement rule**: When generating content for a site, ALWAYS include a "Technical Infrastructure" section in the deliverable listing what the site needs. Do not assume the framework handles it.
+**Enforcement rule**: When generating content for a site, ALWAYS include a "Technical Infrastructure Code" section in the deliverable with **generated HTML/config code** — not just a checklist. Do not assume the framework handles it.
+
+### Delivery Gate (Mandatory)
+
+**Before delivering ANY content, run this gate. If any BLOCKER fails, halt delivery and fix.**
+
+```
+DELIVERY GATE CHECKLIST (run after validation, before delivery):
+
+1. TITLE: ≤60 chars? Brand appears ≤1 time?          → If fail: rewrite title
+2. OG TAGS: All 6 present as HTML code?               → If fail: generate complete block
+3. FRESHNESS: article:modified_time or og:updated_time? → If fail: add meta tags
+4. CANONICAL: <link rel="canonical"> present?          → If fail: add tag
+5. SCHEMA: JSON-LD present and valid?                  → If fail: generate schema
+6. EXTERNAL LINKS: ≥1 for landing, ≥2 for articles?   → If fail: add authoritative links
+7. LINK INTEGRITY: No placeholder/dead URLs?           → If fail: replace or flag [TODO]
+8. SITEMAP: Guidance included?                         → If fail: add sitemap section
+9. ROBOTS.TXT: Template included?                      → If fail: add robots.txt template
+10. WWW REDIRECT: Config snippet included?             → If fail: add redirect config
+
+Result: ALL pass → deliver. ANY BLOCKER fail → fix first, then deliver.
+```
+
+This gate exists because rules in `validation/rules.md` were being scored but not enforced — content was delivered with failing TECH-* rules hidden in a checklist the user never actioned.
 
 ### Validation System
 

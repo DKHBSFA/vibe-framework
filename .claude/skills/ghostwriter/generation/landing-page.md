@@ -163,19 +163,95 @@ Choose based on awareness level:
 
 ---
 
-## Technical Infrastructure Checklist
+## Technical Infrastructure Code (MANDATORY)
 
-The following MUST be present on the deployed site. If any are missing, flag as blockers:
+**This section is NOT a checklist — it is generated code that MUST be included in the deliverable.**
+If any block is missing, the deliverable is incomplete. These are BLOCKER items.
 
-- [ ] `<link rel="canonical" href="https://..." />` in `<head>`
-- [ ] Schema.org JSON-LD in `<head>`
-- [ ] Complete OpenGraph tags (og:title, og:description, og:image, og:url, og:type, og:site_name)
-- [ ] Twitter Card tags
-- [ ] XML sitemap at /sitemap.xml
-- [ ] robots.txt at /robots.txt (with sitemap reference)
-- [ ] WWW canonicalization (301 redirect www↔non-www)
-- [ ] At least 1 external link to authoritative source
-- [ ] At least 8 internal links
+### `<head>` Meta Block
+
+Generate this COMPLETE block with real values (not placeholders, except og:image which needs user input):
+
+```html
+<!-- Canonical -->
+<link rel="canonical" href="https://[domain]/[path]" />
+
+<!-- Open Graph (ALL 6 REQUIRED) -->
+<meta property="og:title" content="[title tag content]" />
+<meta property="og:description" content="[meta description content]" />
+<meta property="og:image" content="[TODO: provide image URL — 1200x630px recommended]" />
+<meta property="og:url" content="https://[domain]/[path]" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="[brand name]" />
+
+<!-- Content Freshness -->
+<meta property="article:published_time" content="[YYYY-MM-DDTHH:MM:SSZ]" />
+<meta property="og:updated_time" content="[YYYY-MM-DDTHH:MM:SSZ]" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="[title tag content]" />
+<meta name="twitter:description" content="[meta description content]" />
+<meta name="twitter:image" content="[same as og:image]" />
+```
+
+### robots.txt Template
+
+```
+User-agent: *
+Allow: /
+
+# AI Search Bots (allow for visibility)
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# Sitemap
+Sitemap: https://[domain]/sitemap.xml
+```
+
+### WWW Canonicalization
+
+**Choose ONE canonical domain and redirect the other with 301.**
+
+For Next.js/Vercel (`next.config.js`):
+```js
+async redirects() {
+  return [{ source: '/:path*', has: [{ type: 'host', value: 'www.[domain]' }], destination: 'https://[domain]/:path*', permanent: true }]
+}
+```
+
+For nginx:
+```nginx
+server { server_name www.[domain]; return 301 https://[domain]$request_uri; }
+```
+
+### Sitemap Reminder
+
+If the framework does not auto-generate a sitemap:
+- Next.js: use `next-sitemap` package or app router `sitemap.ts`
+- Static: generate `sitemap.xml` manually listing all public URLs
+- Submit to Google Search Console AND Bing Webmaster Tools after deploy
+
+### Server Headers Note
+
+Configure `Last-Modified` header for content freshness:
+- Vercel: automatic for static assets; for SSR, set `res.setHeader('Last-Modified', new Date().toUTCString())`
+- nginx: `add_header Last-Modified $date_gmt;`
+
+### Content Link Minimums
+
+- [ ] At least **1 external link** to authoritative source (BLOCKER — 0 external links is a Rank Math failure)
+- [ ] At least **8 internal links** for landing pages
+- [ ] Run broken link scan post-deploy: `npx broken-link-checker https://[domain] --ordered --recursive`
 
 ---
 
