@@ -5,6 +5,24 @@ All notable changes to the VIBE Framework are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-03-09
+
+### Changed
+- **Emmet: command optimization** — Consolidated and streamlined commands
+  - `/adapt-framework` → `/emmet setup` (inside namespace)
+  - `/emmet map` now auto-preserves test status (no `--update` flag needed)
+  - `/emmet test` explicitly defined as static + functions + unit (`--personas` excluded, invoked separately)
+  - `/emmet checklist` without type now shows available options
+  - Removed `/emmet report` (report generated automatically by `/emmet test`)
+- **Ghostwriter: 10 commands → 2** — Radical simplification
+  - `/ghostwriter write [type]` — generates content with research, persona, schema, meta, infra all included
+  - `/ghostwriter optimize [target]` — audit + report + spec + PROCEED + fix (without PROCEED = read-only audit)
+  - Deprecated: audit, research, schema, meta, persona, pillar-cluster, llms-txt, robots (all absorbed)
+
+### Added
+- **`/emmet fix`** — Automatic bug resolution from test/techdebt/static reports
+- **`.ghostwriter/audit-report.md`** — Persistent audit output from `/ghostwriter optimize`
+
 ## [0.4.0] - 2026-03-06
 
 ### Changed

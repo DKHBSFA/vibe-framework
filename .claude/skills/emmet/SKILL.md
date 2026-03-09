@@ -19,17 +19,16 @@ La **functional map** e la fonte di verita: descrive cosa fa l'app, chi la usa, 
 
 | Command | Description |
 |---------|-------------|
-| `/emmet map` | Analizza codebase, genera mappa funzionale completa |
-| `/emmet map --update` | Rigenera la mappa funzionale |
-| `/emmet test` | Ciclo QA completo: analisi statica + test funzionali + unit test |
+| `/emmet map` | Analizza codebase, genera/aggiorna mappa funzionale |
+| `/emmet test` | Ciclo QA completo: static + functions + unit |
 | `/emmet test --static` | Solo analisi statica (veloce, no browser) |
 | `/emmet test --functions` | Test funzionali automatizzati (Playwright runner, assertions, CI-friendly) |
 | `/emmet test --personas` | Test esperienziale (Claude naviga via @playwright/mcp, giudica UX/UI) |
 | `/emmet test --unit` | Solo unit test funzioni pure (da map) |
-| `/emmet report` | Genera report bug da ultimo test |
+| `/emmet fix` | Fix automatico dei bug trovati da test/techdebt/static |
 | `/emmet techdebt [path]` | Audit tech debt (duplicazioni, export orfani, ecc.) |
-| `/emmet checklist [type]` | Carica checklist (code-review, pre-deploy, refactoring, security) |
-| `/adapt-framework` | Analizza stack, genera pattern contestuali |
+| `/emmet checklist [type]` | Carica checklist (senza type: mostra opzioni disponibili) |
+| `/emmet setup` | Analizza stack, genera pattern contestuali |
 
 ---
 
@@ -38,6 +37,8 @@ La **functional map** e la fonte di verita: descrive cosa fa l'app, chi la usa, 
 Analizza il 100% della codebase e produce una mappa funzionale strutturata.
 
 **Output:** `.emmet/functional-map.md`
+
+**Comportamento smart:** Se la map esiste gia, preserva automaticamente lo stato test esistente (date, PASS/FAIL, bug ID). Non serve nessun flag.
 
 **Cosa contiene la map:**
 - **Screens/Views** — Tutte le schermate con elementi interattivi
@@ -62,8 +63,6 @@ Analizza il 100% della codebase e produce una mappa funzionale strutturata.
 11. Classifica per priorita (P1/P2/P3) e deriva edge case dalla firma
 12. Assembla map con template
 
-**Aggiornamento:** `/emmet map --update` rigenera la map mantenendo lo stato test esistente.
-
 **Riferimento completo:** `prompts/map.md`
 
 ---
@@ -76,13 +75,15 @@ Ciclo QA completo. Usa la functional map come guida per sapere cosa testare.
 
 | Comando | Cosa esegue |
 |---------|-------------|
-| `/emmet test` | Ciclo completo: static + browser + unit |
+| `/emmet test` | Ciclo completo: static + functions + unit |
 | `/emmet test --static` | Solo analisi statica (veloce, no browser) |
 | `/emmet test --functions` | Test funzionali automatizzati (Playwright runner) |
 | `/emmet test --personas` | Test esperienziale (Claude naviga via @playwright/mcp) |
 | `/emmet test --unit` | Solo unit test funzioni pure |
 
-### Flusso completo
+**Nota:** `--personas` non e incluso nel ciclo completo perche e qualitativo e lento. Va invocato esplicitamente quando serve una valutazione UX.
+
+### Flusso completo (`/emmet test` senza flag)
 
 ```
 1. Legge functional-map.md per sapere COSA testare
@@ -143,35 +144,27 @@ Dopo ogni esecuzione, aggiorna automaticamente lo stato test nella `functional-m
 
 ---
 
-## `/emmet report`
+## `/emmet fix`
 
-Genera report strutturato dei bug trovati.
+Fix automatico dei bug e problemi trovati da `/emmet test`, `/emmet techdebt`, o `/emmet test --static`.
 
-**Output:** `.emmet/test-report.md`
+**Sorgenti dati (in ordine di priorita):**
+1. `.emmet/test-report.md` — Bug da ultimo ciclo test
+2. `.emmet/techdebt-report.md` — Debito tecnico strutturale
+3. `.claude/docs/bugs/bugs.md` — Bug noti senza `**Sistemato:**`
 
-**Formato:**
-```markdown
-# Test Report - [YYYY-MM-DD]
+**Workflow:**
+1. Legge i report disponibili
+2. Ordina per severita: Critical → High → Medium → Low
+3. Per ogni bug:
+   a. Legge il file indicato
+   b. Applica il fix
+   c. Verifica che il fix non rompa altro (grep per side-effects)
+   d. Marca come risolto nel report sorgente
+4. Aggiorna `.claude/docs/bugs/bugs.md` con `**Sistemato:** completato [YYYY-MM-DD]`
+5. Rigenera summary nel test report
 
-## Summary
-- Bug critici: N
-- Bug high: N
-- Bug medium: N
-- Bug low: N
-
-## Dettagli
-
-### [BUG-001] Titolo bug
-- **Severita:** Critical/High/Medium/Low
-- **File:** path/to/file:line
-- **Atteso:** Comportamento atteso
-- **Ottenuto:** Comportamento ottenuto
-- **Steps to reproduce:** (per bug dinamici)
-- **Screenshot:** (se disponibile)
-- **Fix suggerito:** Soluzione proposta
-```
-
-**Riferimento completo:** `testing/report-template.md`
+**Limiti:** Non fixa bug che richiedono decisioni architetturali o cambio di interfaccia. Li segnala e chiede input.
 
 ---
 
@@ -216,6 +209,8 @@ Audit del codebase per debito tecnico strutturale.
 
 Carica checklist operativa.
 
+**Senza type:** Mostra le opzioni disponibili e chiede quale caricare.
+
 **Types disponibili:**
 - `code-review` - Checklist per code review
 - `pre-deploy` - Checklist pre-deployment
@@ -226,7 +221,7 @@ Carica checklist operativa.
 
 ---
 
-## `/adapt-framework`
+## `/emmet setup`
 
 Analizza il progetto e genera pattern stack-specific.
 
@@ -265,7 +260,10 @@ Analizza il progetto e genera pattern stack-specific.
 |---------|---------------|--------|
 | `/emmet plan` | `/emmet map` | La map include il test plan implicitamente (ogni UC = un test) |
 | `/emmet journey [flow]` | `/emmet test --functions` | Il test funzionale usa la map come source of truth |
-| `/emmet test --browser` | `--functions` / `--personas` | Separato in due modalità distinte |
+| `/emmet test --browser` | `--functions` / `--personas` | Separato in due modalita distinte |
+| `/emmet map --update` | `/emmet map` | Comportamento smart automatico (preserva stato se map esiste) |
+| `/emmet report` | `/emmet test` | Il report si genera automaticamente con il ciclo test |
+| `/adapt-framework` | `/emmet setup` | Portato dentro il namespace emmet |
 
 ---
 
@@ -290,7 +288,7 @@ Non c'e sovrapposizione: seurat descrive **come appare**, emmet descrive **cosa 
 
 ## Directory Structure
 
-Skill files are organized in: `prompts/`, `templates/`, `testing/`, and `checklists/`. Stack-specific patterns generated by `/adapt-framework` are saved to `.emmet/stacks/`.
+Skill files are organized in: `prompts/`, `templates/`, `testing/`, and `checklists/`. Stack-specific patterns generated by `/emmet setup` are saved to `.emmet/stacks/`.
 
 Key testing reference files:
 - `testing/static.md` — Rules for static code analysis

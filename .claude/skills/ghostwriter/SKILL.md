@@ -1,17 +1,6 @@
 ---
 name: ghostwriter
 description: Dual-platform search optimization (SEO + GEO) and persuasive copywriting. Use when creating content for websites, landing pages, articles, product descriptions, or any text that needs to rank in traditional search AND be cited by AI systems.
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Grep
-  - Glob
-  - Bash
-  - WebSearch
-  - WebFetch
-  - AskUserQuestion
-  - Task
 ---
 
 # SEO-GEO-Copy Skill
@@ -44,33 +33,16 @@ For search landscape context and statistics, see `KNOWLEDGE.md`. **Key principle
 
 ## Commands
 
-### `/ghostwriter audit [url or content]`
-
-Comprehensive dual-platform content audit:
-
-1. **Traditional SEO Analysis**
-   - Title tag, meta description, H1 optimization
-   - Keyword placement and density
-   - Internal/external linking structure
-   - Technical factors (if URL provided)
-
-2. **GEO Analysis**
-   - Answer-first structure assessment
-   - Chunk retrievability score
-   - Entity clarity evaluation
-   - Citation potential rating
-
-3. **Copywriting Analysis**
-   - Hook strength
-   - Value proposition clarity
-   - Call-to-action effectiveness
-   - Persuasion framework identification
-
-**Output**: Structured report with scores and actionable recommendations
+| Command | Description |
+|---------|-------------|
+| `/ghostwriter write [type]` | Genera contenuto nuovo dual-optimized (ricerca, persona, schema, meta, infra — tutto incluso) |
+| `/ghostwriter optimize [target]` | Analizza contenuto/codebase esistente → audit report → spec fix → PROCEED → applica |
 
 ### `/ghostwriter write [type]`
 
-Generate optimized content. Types:
+Genera contenuto ottimizzato per search engine tradizionali e AI search. Include tutto: ricerca keyword, persona, schema JSON-LD, meta tags, infrastruttura tecnica.
+
+**Types:**
 
 | Type | Description |
 |------|-------------|
@@ -79,135 +51,60 @@ Generate optimized content. Types:
 | `product` | Product description |
 | `service` | Service page |
 | `faq` | FAQ section (GEO-optimized) |
-| `pillar` | Comprehensive pillar page |
+| `pillar` | Comprehensive pillar page (include topic cluster map + linking plan) |
 | `cluster` | Topic cluster page |
 
-**Workflow**:
-1. Collect requirements (topic, keywords, audience, goals)
-2. Research search intent and AI platform behavior
-3. Generate dual-optimized content
-4. Apply copywriting framework
-5. Validate against checklists
+**Workflow:**
+1. **Intake** — Raccoglie requisiti (topic, keywords, audience, goals)
+2. **Research** — Keyword analysis, search intent, AI platform behavior, competitor gaps, buyer persona
+3. **Generate** — Contenuto dual-optimized con copywriting framework
+4. **Infra** — Schema JSON-LD, meta tags, OG tags, canonical, robots.txt guidance, llms.txt, sitemap
+5. **Validate** — 52 regole da `validation/rules.md`
+6. **Delivery gate** — 10 check bloccanti (vedi sotto)
 
-### `/ghostwriter research [topic]`
+**Output:** Contenuto + schema + meta + infra tecnica completa
 
-Research phase before content creation:
+### `/ghostwriter optimize [target]`
 
-1. **Keyword Analysis**
-   - Primary keyword identification
-   - Long-tail variations
-   - Search intent classification (Informational/Navigational/Commercial/Transactional)
-   - Competitor keyword gaps
+Analizza e ottimizza contenuto o codebase esistente per dual platform (SEO + GEO).
 
-2. **AI Platform Analysis**
-   - Query AI platforms with topic-related prompts
-   - Analyze current citation sources
-   - Identify content gaps in AI responses
-   - Map entity relationships
+**Target:** File, directory, o URL.
 
-3. **SERP Analysis**
-   - Current top 10 results structure
-   - Featured snippet opportunities
-   - People Also Ask questions
-   - Related searches
+**Workflow:**
+1. **Audit** — Analisi completa su 3 dimensioni:
+   - **SEO**: title, meta, H1, keyword, linking, technical
+   - **GEO**: answer-first, chunk retrievability, entity clarity, citation potential
+   - **Copy**: hook, value prop, CTA, persuasion framework
+2. **Report** — Genera `.ghostwriter/audit-report.md` con score e raccomandazioni actionable
+3. **Spec** — Crea spec delle ottimizzazioni da applicare
+4. **PROCEED** — Aspetta approvazione
+5. **Fix** — Applica trasformazioni:
+   - Answer-first summaries
+   - Chunk restructuring
+   - Entity clarity enhancement
+   - E-E-A-T signals
+   - Schema/meta/OG se mancanti
+   - robots.txt e llms.txt se necessari
+6. **Validate** — Ri-valida contro `validation/rules.md`
 
-**Output**: Research brief for content creation
+**Output:** `.ghostwriter/audit-report.md` + contenuto ottimizzato
 
-### `/ghostwriter optimize [file]`
+**Nota:** Senza PROCEED, il comando si ferma dopo il report — equivale a un audit read-only.
 
-Optimize existing content for dual platforms:
+---
 
-1. Read the file
-2. Identify optimization opportunities
-3. Apply transformations:
-   - Add answer-first summaries
-   - Restructure for chunk retrieval
-   - Enhance entity definitions
-   - Strengthen E-E-A-T signals
-   - Improve copywriting elements
-4. Validate against checklists
-5. Present diff with explanations
+## Deprecated Commands
 
-### `/ghostwriter schema [type]`
-
-Generate Schema.org structured data:
-
-| Type | Schema |
-|------|--------|
-| `article` | Article, NewsArticle, BlogPosting |
-| `product` | Product, Offer, AggregateRating |
-| `faq` | FAQPage, Question, Answer |
-| `howto` | HowTo, Step |
-| `local` | LocalBusiness, Organization |
-| `person` | Person (for author bios) |
-| `event` | Event |
-
-**Output**: JSON-LD code ready for implementation
-
-### `/ghostwriter persona [audience]`
-
-Create buyer/reader persona for targeting:
-
-1. Demographics and psychographics
-2. Search behavior patterns
-3. AI platform usage habits
-4. Content consumption preferences
-5. Pain points and desires
-6. Language and terminology preferences
-
-**Output**: Detailed persona document for content alignment
-
-### `/ghostwriter pillar-cluster [topic]`
-
-Design topic cluster architecture:
-
-1. Identify pillar topic
-2. Map subtopics to cluster pages
-3. Design internal linking structure
-4. Assign content types per page
-5. Create production schedule
-
-**Output**: Topic cluster map with implementation plan
-
-### `/ghostwriter llms-txt`
-
-Generate llms.txt file for AI crawler directives:
-
-1. Analyze site structure
-2. Identify content permissions
-3. Generate llms.txt with appropriate rules
-4. Provide implementation instructions
-
-**Note**: llms.txt is emerging; not yet universally supported.
-
-### `/ghostwriter robots [strategy]`
-
-Configure robots.txt for dual optimization:
-
-Strategies:
-- `allow-all`: Full access for all crawlers
-- `selective`: Allow search bots, selective AI bot access
-- `search-only`: Block AI training bots, allow search bots
-
-**AI Bot User Agents**:
-```
-OAI-SearchBot     - ChatGPT Search (ALLOW for visibility)
-ChatGPT-User      - Real-time ChatGPT queries (ALLOW)
-GPTBot            - OpenAI training (optional block)
-ClaudeBot         - Anthropic crawler
-PerplexityBot     - Perplexity AI
-Google-Extended   - Gemini training (optional block)
-```
-
-### `/ghostwriter meta [content]`
-
-Generate optimized meta tags:
-
-1. Title tag (30-55 characters target, hard max 60, keyword-first)
-2. Meta description (120-155 characters target, hard max 158, CTA-oriented)
-3. Open Graph tags (ALL 6 required: og:title, og:description, og:image, og:url, og:type, og:site_name)
-4. Twitter Card tags
-5. Canonical URL recommendation
+| Comando | Sostituito da | Motivo |
+|---------|---------------|--------|
+| `/ghostwriter audit` | `/ghostwriter optimize` (senza PROCEED) | L'audit è il primo step di optimize. Report in `.ghostwriter/audit-report.md` |
+| `/ghostwriter research [topic]` | `/ghostwriter write` (step 2) | La ricerca è parte integrante della generazione |
+| `/ghostwriter schema [type]` | `/ghostwriter write` / `optimize` | Schema generato automaticamente come parte del deliverable |
+| `/ghostwriter meta [content]` | `/ghostwriter write` / `optimize` | Meta tags generati automaticamente come parte del deliverable |
+| `/ghostwriter persona [audience]` | `/ghostwriter write` (step 2) | Persona derivata durante la fase di ricerca |
+| `/ghostwriter pillar-cluster [topic]` | `/ghostwriter write pillar` | Il type `pillar` include topic cluster map + linking plan |
+| `/ghostwriter llms-txt` | `/ghostwriter optimize` / `write` | Generato come parte dell'infrastruttura tecnica |
+| `/ghostwriter robots [strategy]` | `/ghostwriter optimize` / `write` | Generato come parte dell'infrastruttura tecnica |
 
 ---
 

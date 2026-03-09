@@ -36,7 +36,7 @@ Salta le sezioni che non si applicano.
 
 **3. Genera pattern per lo stack:**
 ```
-/adapt-framework
+/emmet setup
 ```
 
 **4. (Opzionale) Per progetti con UI:**
@@ -124,12 +124,12 @@ progetto/
         │   ├── templates/    # Archetipi pagina + preview
         │   └── wireframes/   # Layout system, componenti, varianti
         ├── emmet/            # Skill testing, QA, tech debt, checklists
-        │   ├── SKILL.md      # Entry point + /adapt-framework
+        │   ├── SKILL.md      # Entry point + comandi
         │   ├── prompts/      # Workflow operativi (map, test)
         │   ├── templates/    # Template output (functional-map)
         │   ├── scripts/      # Script automazione
         │   ├── testing/      # Static e dynamic testing
-        │   ├── stacks/       # Pattern generati per stack (via /adapt-framework)
+        │   ├── stacks/       # Pattern generati per stack (via /emmet setup)
         │   └── checklists/   # Checklist universali
         ├── heimdall/         # Skill sicurezza AI-specific
         │   ├── SKILL.md      # Definizione skill e comandi
@@ -196,14 +196,14 @@ Genera stile visivo e crea il design system in `.seurat/tokens.css` + `.seurat/d
 Apri `design-system.html` nel browser per validare visivamente.
 
 ```
-/adapt-framework
+/emmet setup
 ```
 Analizza lo stack e genera pattern di sviluppo specifici.
 
 #### Progetto backend-only
 
 ```
-/adapt-framework
+/emmet setup
 ```
 Analizza lo stack (Node, Python, Go, etc.) e genera pattern specifici.
 
@@ -233,7 +233,7 @@ Salta le sezioni che non si applicano.
 3. **Obbligatorio:** Genera pattern per lo stack:
 
 ```
-/adapt-framework
+/emmet setup
 ```
 
 4. **Se ci sono pattern architetturali già stabiliti**, documentali:
@@ -301,7 +301,7 @@ Include status check automatico del progresso.
 | File/Comando | Tipo | Quando |
 |--------------|------|--------|
 | `registry.md` | **Obbligatorio** | Subito dopo aver copiato il framework |
-| `/adapt-framework` | **Obbligatorio** | Genera pattern per lo stack del progetto |
+| `/emmet setup` | **Obbligatorio** | Genera pattern per lo stack del progetto. (Sostituisce `/adapt-framework`) |
 | `decisions.md` | Consigliato | Se ci sono pattern già stabiliti |
 | `/heimdall audit` | Consigliato | Audit sicurezza iniziale su progetti esistenti |
 | `/emmet techdebt` | Consigliato | Audit tech debt iniziale |
@@ -445,22 +445,24 @@ Testing, QA, tech debt audit, functional mapping e checklist di sviluppo. Includ
 
 | Comando | Cosa fa |
 |---------|---------|
-| `/adapt-framework` | Analizza il progetto e genera pattern per lo stack rilevato |
-| `/emmet map` | Analizza codebase e genera functional map (source of truth per testing) |
-| `/emmet map --update` | Rigenera functional map preservando stato test |
-| `/emmet test` | Ciclo QA completo (static analysis + browser test) |
+| `/emmet setup` | Analizza il progetto e genera pattern per lo stack rilevato |
+| `/emmet map` | Analizza codebase e genera/aggiorna functional map (preserva stato test se esiste) |
+| `/emmet test` | Ciclo QA completo: static + functions + unit |
 | `/emmet test --static` | Solo analisi statica (veloce, no browser) |
-| `/emmet test --browser` | Solo test browser (Playwright o BrowserMCP) |
-| `/emmet report` | Genera bug report dall'ultimo test |
+| `/emmet test --functions` | Test funzionali automatizzati (Playwright runner, assertions, CI-friendly) |
+| `/emmet test --personas` | Test esperienziale (Claude naviga via @playwright/mcp, giudica UX/UI) |
+| `/emmet test --unit` | Solo unit test funzioni pure |
+| `/emmet fix` | Fix automatico dei bug trovati da test/techdebt/static |
 | `/emmet techdebt [path]` | Audit duplicazioni, export orfani, import inutilizzati, file oversized + Debt Rating A-F |
-| `/emmet checklist [type]` | Carica checklist (pre-deploy, refactoring, code-review, security) |
+| `/emmet checklist [type]` | Carica checklist (senza type: mostra opzioni disponibili) |
 
 **Funzionalità:**
 - **Functional mapping** — Scansiona 100% del codebase: schermate, transizioni stato, personas, use cases, workflow
-- **Dual testing backend** — Auto-rileva Playwright (CI) vs BrowserMCP (visual regression)
 - **Static analysis** — Sicurezza, errori logici, performance, qualità codice
-- **Dynamic testing** — Test con Playwright (API, UI, E2E)
-- **Visual QA** — Confronto screenshot per regressioni UI (multimodal)
+- **Functional testing** — Test automatizzati Playwright con principi P1-P9 (profondità, esaustività, multi-step)
+- **Experiential testing** — Claude naviga via @playwright/mcp, valuta UX/UI come un utente reale
+- **Unit testing** — Test funzioni pure (framework auto-detected: Jest/Vitest/pytest/go test/cargo test)
+- **Auto-fix** — Risoluzione automatica bug da report test/techdebt/static
 - **Tech debt audit** — Duplicazioni, export orfani, import inutilizzati, file oversized (>300 righe)
 - **Checklists** — Pre-deploy, refactoring, code-review, security
 - **Integrazione Heimdall** — Security pre-check automatico su file sensibili
@@ -501,16 +503,14 @@ Contenuti ottimizzati per search engine tradizionali (Google, Bing) e AI search 
 
 | Comando | Cosa fa |
 |---------|---------|
-| `/ghostwriter write [type]` | Genera contenuto dual-optimized (landing, article, product, service, faq, pillar, cluster) |
-| `/ghostwriter audit [url/content]` | Audit SEO + GEO + copywriting con score 0-100 |
-| `/ghostwriter research [topic]` | Ricerca keyword + intent + competitor gaps + AI platforms |
-| `/ghostwriter optimize [file]` | Ottimizza contenuto esistente per dual platform |
-| `/ghostwriter schema [type]` | Genera JSON-LD strutturato |
-| `/ghostwriter persona [audience]` | Crea buyer/reader persona |
-| `/ghostwriter pillar-cluster [topic]` | Progetta architettura topic cluster |
-| `/ghostwriter meta [content]` | Genera title tag, meta description, OG tags |
-| `/ghostwriter llms-txt` | Genera direttive llms.txt per AI crawlers |
-| `/ghostwriter robots [strategy]` | Configura robots.txt (allow-all/selective/search-only) |
+| `/ghostwriter write [type]` | Genera contenuto nuovo dual-optimized (ricerca, persona, schema, meta, infra — tutto incluso) |
+| `/ghostwriter optimize [target]` | Analizza contenuto/codebase esistente → audit report → spec fix → PROCEED → applica |
+
+**Types per write:** landing, article, product, service, faq, pillar (include topic cluster), cluster
+
+**Optimize senza PROCEED** = audit read-only (report in `.ghostwriter/audit-report.md`). Con PROCEED = audit + fix.
+
+**Tutto incluso in entrambi i comandi:** keyword research, persona, Schema JSON-LD, meta tags, OG tags, canonical, robots.txt, llms.txt, sitemap guidance. I vecchi comandi standalone (audit, research, schema, meta, persona, pillar-cluster, llms-txt, robots) sono deprecati — le loro funzionalità sono integrate nei due comandi principali.
 
 **Attivazione:** content creation, SEO, GEO, copywriting, landing page, article, blog post, product description, AI citation
 

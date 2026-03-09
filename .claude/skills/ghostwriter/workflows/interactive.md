@@ -207,312 +207,6 @@ RESULT: All checks pass → proceed to Phase 5.
 
 ---
 
-## Command: `/ghostwriter audit`
-
-### Phase 1: Input Collection
-
-```
-1. What should I audit?
-   [ ] Single page (provide URL or paste content)
-   [ ] Multiple pages (provide URLs)
-   [ ] Full site (provide sitemap or domain)
-
-2. [If single page] Paste the content or provide URL:
-   [Free text / URL]
-
-3. What is the primary keyword for this page?
-   [Free text]
-
-4. What type of content is this?
-   [ ] Article
-   [ ] Landing page
-   [ ] Product page
-   [ ] Category page
-   [ ] Homepage
-   [ ] Other
-```
-
-### Phase 2: Analysis
-
-**I do this automatically:**
-
-1. Parse content structure
-2. Extract current title/meta
-3. Identify keywords used
-4. Analyze headers and hierarchy
-5. Check for schema
-6. Evaluate content quality
-
-### Phase 3: Validation
-
-**Run full validation:**
-1. Apply all rules from `/validation/rules.md`
-2. Generate detailed report
-
-### Phase 4: Recommendations
-
-**Present prioritized fixes with generated code for all BLOCKER items:**
-
-```
-## Audit Report: [Page Title]
-
-### Score: X/52 (X%)
-
-### BLOCKER Issues (Must Fix — Code Provided)
-
-For each BLOCKER, provide the ACTUAL CODE to fix it, not just a description:
-
-1. [Issue] - [Generated HTML/config code to fix it]
-2. [Issue] - [Generated HTML/config code to fix it]
-
-### High Priority
-3. [Issue] - [Specific fix]
-4. [Issue] - [Specific fix]
-
-### Medium Priority
-5. [Issue] - [Specific fix]
-
-### Low Priority / Enhancements
-6. [Issue] - [Specific fix]
-
----
-
-### Generated Fix Code
-
-If the audit found missing OG tags, sitemap, robots.txt, WWW redirect, or freshness meta:
-provide the complete code blocks here (same format as generation/landing-page.md
-Technical Infrastructure Code section). Do NOT just say "add OG tags" — generate them.
-
----
-
-### Post-Deploy Checks
-
-- [ ] Run broken link scan: `npx broken-link-checker [url] --ordered --recursive`
-- [ ] Verify WWW redirect: `curl -I https://www.[domain]` should show 301
-- [ ] Verify sitemap: `curl https://[domain]/sitemap.xml` should return XML
-- [ ] Verify robots.txt: `curl https://[domain]/robots.txt`
-
----
-
-### Rewritten Content (if requested)
-
-[Provide fixed version]
-```
-
----
-
-## Command: `/ghostwriter schema`
-
-### Phase 1: Input
-
-```
-1. What type of schema do you need?
-   [ ] Article
-   [ ] FAQ
-   [ ] Product
-   [ ] LocalBusiness
-   [ ] Person
-   [ ] HowTo
-   [ ] Organization
-   [ ] Event
-   [ ] Other: ___
-
-2. I'll need the following information:
-   [Dynamic questions based on schema type selected]
-```
-
-### Phase 2: Schema-Specific Questions
-
-**Article:**
-- Headline?
-- Author name?
-- Publication date?
-- Publisher name?
-- Featured image URL?
-- Article body summary?
-
-**FAQ:**
-- List your questions and answers:
-  Q1: ___ A1: ___
-  Q2: ___ A2: ___
-  (continue as needed)
-
-**Product:**
-- Product name?
-- Description?
-- Brand?
-- Price?
-- Currency?
-- Availability?
-- SKU?
-- Image URLs?
-- Rating (if any)?
-
-**LocalBusiness:**
-- Business name?
-- Address?
-- Phone?
-- Hours?
-- Price range?
-- Business type?
-
-**Person:**
-- Full name?
-- Job title?
-- Employer?
-- Bio?
-- Image URL?
-- Social profiles?
-
-**HowTo:**
-- Title?
-- Steps (name + description each)?
-- Tools needed?
-- Supplies needed?
-- Total time?
-
-### Phase 3: Generation
-
-1. Load template from `/templates/schemas/[type].json`
-2. Fill in user-provided values
-3. Validate JSON syntax
-4. Present completed schema
-
----
-
-## Command: `/ghostwriter pillar-cluster`
-
-### Phase 1: Topic Discovery
-
-```
-1. What is the core topic you want to own?
-   [Free text]
-
-2. What is your business/site about?
-   [Free text - helps contextualize]
-
-3. How much content can you realistically produce?
-   [ ] 5-10 articles
-   [ ] 10-20 articles
-   [ ] 20+ articles
-
-4. Any existing content to incorporate?
-   [URLs or page names]
-```
-
-### Phase 2: Architecture Generation
-
-1. Generate pillar page concept
-2. Generate 8-15 cluster topics
-3. Map relationships
-4. Create internal linking plan
-
-### Phase 3: Deliverable
-
-```
-## Pillar-Cluster Architecture: [Topic]
-
-### Pillar Page
-[Title and structure]
-
-### Cluster Articles (Prioritized)
-1. [Cluster] - [Why prioritized]
-2. [Cluster]
-...
-
-### Implementation Roadmap
-1. Create pillar page first
-2. Then clusters in priority order
-3. Add links as each piece publishes
-
-### Content Briefs
-[Brief for each piece]
-```
-
----
-
-## Command: `/ghostwriter research`
-
-### Phase 1: Topic Input
-
-```
-1. What topic/keyword do you want to research?
-   [Free text]
-
-2. What is the business context?
-   [ ] Product/service I sell
-   [ ] Topic I want to rank for
-   [ ] Competitor analysis
-   [ ] Content gap identification
-
-3. What geographic market?
-   [ ] Global (English)
-   [ ] Specific country: ___
-   [ ] Local area: ___
-```
-
-### Phase 2: Research Execution
-
-**I do this automatically:**
-
-1. **Keyword Analysis**
-   - Primary keyword identification
-   - Long-tail variations (10-20)
-   - Search intent classification
-   - Estimated search volume indicators
-
-2. **AI Platform Analysis**
-   - Query ChatGPT, Claude, Perplexity with topic
-   - Analyze what sources they cite
-   - Identify content gaps in AI responses
-   - Map entity relationships
-
-3. **SERP Analysis**
-   - Current top 10 results structure
-   - Featured snippet opportunities
-   - People Also Ask questions
-   - Related searches
-
-### Phase 3: Research Brief Delivery
-
-```
-## Research Brief: [Topic]
-
-### Primary Keyword
-[keyword] - Intent: [type] - Difficulty: [estimate]
-
-### Long-Tail Opportunities
-1. [keyword] - Intent: [type]
-2. [keyword] - Intent: [type]
-...
-
-### Search Intent Analysis
-- Informational queries: [%]
-- Commercial queries: [%]
-- Transactional queries: [%]
-
-### AI Citation Analysis
-- Top cited sources: [list]
-- Content gaps AI couldn't answer: [list]
-- Entity relationships: [map]
-
-### SERP Features Available
-- Featured snippet: [yes/no] - Format: [paragraph/list/table]
-- People Also Ask: [list of questions]
-- Related searches: [list]
-
-### Content Recommendations
-1. [Recommendation based on research]
-2. [Recommendation]
-3. [Recommendation]
-
-### Recommended Next Steps
-- [ ] `/ghostwriter write article` for [topic]
-- [ ] `/ghostwriter pillar-cluster` for [topic]
-```
-
----
-
 ## Command: `/ghostwriter optimize`
 
 ### Phase 1: Input Collection
@@ -521,9 +215,9 @@ Technical Infrastructure Code section). Do NOT just say "add OG tags" — genera
 1. Provide the content to optimize:
    [ ] File path: ___
    [ ] URL: ___
-   [ ] Paste content directly
+   [ ] Directory: ___
 
-2. What is the target keyword?
+2. What is the target keyword? (optional — I'll identify from content)
    [Free text]
 
 3. What type of content is this?
@@ -532,378 +226,68 @@ Technical Infrastructure Code section). Do NOT just say "add OG tags" — genera
    [ ] Product Description
    [ ] Category Page
    [ ] Homepage
+   [ ] Full site / multiple pages
 ```
 
-### Phase 2: Analysis
+### Phase 2: Audit (Automatic)
 
-**I do this automatically:**
+**I do this automatically and save results to `.ghostwriter/audit-report.md`:**
 
-1. Read the content
-2. Analyze current SEO state
-3. Analyze GEO readiness
-4. Analyze copywriting effectiveness
-5. Run validation against rules.md
+1. **SEO Analysis**
+   - Title tag, meta description, H1 optimization
+   - Keyword placement and density
+   - Internal/external linking structure
+   - Technical factors (canonical, schema, OG tags, freshness)
 
-### Phase 3: Optimization Plan
+2. **GEO Analysis**
+   - Answer-first structure assessment
+   - Chunk retrievability score
+   - Entity clarity evaluation
+   - Citation potential rating
+
+3. **Copywriting Analysis**
+   - Hook strength
+   - Value proposition clarity
+   - Call-to-action effectiveness
+   - Persuasion framework identification
+
+4. **Validation** against `validation/rules.md` (52 rules)
+
+**Output: `.ghostwriter/audit-report.md`** with scores, BLOCKER issues, and prioritized recommendations with generated fix code.
+
+### Phase 3: Optimization Spec
 
 **Present before making changes:**
 
 ```
-## Optimization Analysis: [Title]
+## Optimization Spec: [Title]
 
-### Current Score: X/50 (X%)
+### Current Score: X/52 (X%)
 
-### Changes I Propose
+### BLOCKER Issues (Must Fix)
+1. [Issue] - [Generated code to fix]
 
-**SEO Improvements:**
-1. [Change] - Current: [X] → Proposed: [Y]
-2. [Change]
+### Proposed Changes
 
-**GEO Improvements:**
-1. [Change] - Why: [reason]
-2. [Change]
-
-**Copywriting Improvements:**
-1. [Change] - Impact: [expected result]
-2. [Change]
+**SEO:** [list with current → proposed]
+**GEO:** [list with rationale]
+**Copy:** [list with expected impact]
+**Infra:** [missing schema/meta/OG/robots/llms.txt]
 
 ### Impact Estimate
-- SEO Score: X → Y (+Z)
-- GEO Score: X → Y (+Z)
-- Copywriting Score: X → Y (+Z)
-- Total: X → Y (+Z%)
-
-Apply these changes? [Yes / Customize / Skip specific changes]
+- Score: X → Y (+Z%)
 ```
 
-### Phase 4: Execution
+### Phase 4: PROCEED Gate
+
+User approves, customizes, or stops here (audit-only use case).
+
+### Phase 5: Execution
 
 1. Apply approved changes
-2. Re-run validation
-3. Present diff with explanations
-4. Deliver optimized content + updated metadata
-
----
-
-## Command: `/ghostwriter persona`
-
-### Phase 1: Audience Input
-
-```
-1. Who are you trying to reach?
-   [Free text description]
-
-2. What product/service are you selling to them?
-   [Free text]
-
-3. What do you know about your current customers?
-   [ ] I have customer data/interviews
-   [ ] I have website analytics
-   [ ] I'm making assumptions
-   [ ] Starting fresh
-```
-
-### Phase 2: Persona Questions (if needed)
-
-**If user has data, ask:**
-- What's the most common customer profile?
-- What do they say about why they bought?
-- What objections come up most?
-
-**If starting fresh, I infer from:**
-- Product/service characteristics
-- Price point implications
-- Industry norms
-
-### Phase 3: Persona Generation
-
-```
-## Buyer Persona: [Name]
-
-### Demographics
-- Age range: [X-Y]
-- Job title/role: [typical]
-- Industry: [if B2B]
-- Income level: [if relevant]
-- Location: [if relevant]
-
-### Psychographics
-- Values: [list]
-- Fears: [list]
-- Aspirations: [list]
-- Decision-making style: [analytical/emotional/social]
-
-### Search Behavior
-- How they search: [question format/keyword format]
-- Where they search: [Google/AI assistants/YouTube/etc.]
-- When they search: [buying journey stage]
-- Typical queries: [example queries]
-
-### AI Platform Usage
-- Uses ChatGPT/Claude for: [research/recommendations/comparison]
-- Trust level in AI: [high/medium/low]
-- Verification behavior: [checks sources/trusts AI/mixed]
-
-### Content Preferences
-- Format: [long-form/scannable/video/etc.]
-- Tone: [formal/casual/technical]
-- Proof: [data/testimonials/case studies]
-- Objections to address: [list top 3]
-
-### Messaging Do's and Don'ts
-**Do:**
-- [Effective approach]
-- [Effective approach]
-
-**Don't:**
-- [Ineffective/offensive approach]
-- [Ineffective approach]
-
-### Sample Headlines That Work
-1. [Example headline for this persona]
-2. [Example headline]
-3. [Example headline]
-```
-
----
-
-## Command: `/ghostwriter llms-txt`
-
-### Phase 1: Site Analysis
-
-```
-1. What is your site's domain?
-   [URL]
-
-2. What type of site is this?
-   [ ] E-commerce
-   [ ] SaaS / Software
-   [ ] Content / Media
-   [ ] Service business
-   [ ] Personal / Portfolio
-
-3. What content should AI systems have access to?
-   [ ] All public content
-   [ ] Only specific sections: ___
-   [ ] Everything except: ___
-```
-
-### Phase 2: Strategy Questions
-
-```
-4. What is your AI visibility goal?
-   [ ] Maximum citation (want AI to reference us)
-   [ ] Selective citation (only certain content)
-   [ ] Minimal citation (protect proprietary content)
-
-5. Any content you specifically want AI to cite?
-   [URLs or content types]
-
-6. Any content you want to protect from AI training?
-   [URLs or content types]
-```
-
-### Phase 3: llms.txt Generation
-
-**Note**: llms.txt is an emerging standard. Not all AI systems honor it yet.
-
-```
-## Generated llms.txt
-
-[Generated file content]
-
----
-
-## Implementation Instructions
-
-1. Save this file as `llms.txt` in your site root
-2. The file should be accessible at: [domain]/llms.txt
-3. Update your robots.txt to reference it (optional)
-
-## What This Does
-
-- [Explanation of each directive]
-- [What AI systems will see]
-- [Expected behavior]
-
-## Limitations
-
-- Not all AI systems honor llms.txt yet
-- Effectiveness varies by platform
-- Monitor and adjust as needed
-
-## Recommended robots.txt additions
-
-[robots.txt directives to complement llms.txt]
-```
-
----
-
-## Command: `/ghostwriter robots`
-
-### Phase 1: Strategy Selection
-
-```
-1. What is your robot.txt strategy?
-   [ ] allow-all - Full access for all crawlers (maximum visibility)
-   [ ] selective - Allow search bots, selective AI bot access
-   [ ] search-only - Block AI training bots, allow search bots
-
-2. Do you have any specific pages to block?
-   [ ] Admin/login pages: ___
-   [ ] Staging/test pages: ___
-   [ ] Private content: ___
-   [ ] None
-```
-
-### Phase 2: AI Bot Configuration
-
-**If selective or search-only:**
-
-```
-3. Configure AI bot access:
-
-   OAI-SearchBot (ChatGPT Search):     [ ] Allow [ ] Block
-   ChatGPT-User (real-time queries):   [ ] Allow [ ] Block
-   GPTBot (OpenAI training):           [ ] Allow [ ] Block
-   ClaudeBot (Anthropic):              [ ] Allow [ ] Block
-   PerplexityBot:                      [ ] Allow [ ] Block
-   Google-Extended (Gemini training):  [ ] Allow [ ] Block
-   Bytespider (TikTok/Bytedance):      [ ] Allow [ ] Block
-   CCBot (Common Crawl):               [ ] Allow [ ] Block
-```
-
-### Phase 3: robots.txt Generation
-
-```
-## Generated robots.txt
-
-[Generated file content with comments explaining each section]
-
----
-
-## Implementation Instructions
-
-1. Save this file as `robots.txt` in your site root
-2. The file should be accessible at: [domain]/robots.txt
-3. Add your sitemap URL (update the placeholder)
-
-## What Each Section Does
-
-- [Explanation of search bot rules]
-- [Explanation of AI bot rules]
-- [Explanation of blocked paths]
-
-## Verification Steps
-
-1. Test at: https://www.google.com/webmasters/tools/robots-testing-tool
-2. Check Google Search Console for crawl errors
-3. Verify in Bing Webmaster Tools
-
-## Important Notes
-
-- Changes take effect immediately for new crawls
-- Existing indexed pages aren't automatically removed
-- Use noindex for pages you want completely removed from search
-```
-
----
-
-## Command: `/ghostwriter meta`
-
-### Phase 1: Input Collection
-
-```
-1. What content needs meta tags?
-   [ ] Provide URL: ___
-   [ ] Paste content directly
-   [ ] File path: ___
-
-2. What is the primary keyword?
-   [Free text]
-
-3. What type of page is this?
-   [ ] Article / Blog Post
-   [ ] Landing Page
-   [ ] Product Page
-   [ ] Category Page
-   [ ] Homepage
-   [ ] About Page
-
-4. What is the brand/site name?
-   [Free text - for title suffix]
-```
-
-### Phase 2: Content Analysis
-
-**I do this automatically:**
-
-1. Extract main topic and angle
-2. Identify unique value proposition
-3. Determine call-to-action
-4. Check competitor title patterns
-
-### Phase 3: Meta Generation
-
-**Generate all required tags:**
-
-```
-## Meta Tags: [Page Title]
-
-### Title Tag
-`[Generated title - XX characters]`
-
-✓ Length: XX/60 characters
-✓ Keyword: [position]
-✓ Brand: [included/not included]
-
-### Meta Description
-`[Generated description - XXX characters]`
-
-✓ Length: XXX/158 characters
-✓ CTA: [included]
-✓ Keyword: [included naturally]
-
-### Open Graph Tags (ALL 6 REQUIRED)
-
-```html
-<meta property="og:title" content="[title]" />
-<meta property="og:description" content="[description]" />
-<meta property="og:image" content="[image URL - YOU MUST PROVIDE]" />
-<meta property="og:url" content="[canonical URL]" />
-<meta property="og:type" content="[article/website/product]" />
-<meta property="og:site_name" content="[brand name]" />
-```
-
-### Twitter Card Tags
-
-```html
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="[title]" />
-<meta name="twitter:description" content="[description]" />
-<meta name="twitter:image" content="[image URL]" />
-```
-
-### Canonical Tag
-
-```html
-<link rel="canonical" href="[full URL]" />
-```
-
-### URL Slug Recommendation
-`/[recommended-slug]/`
-
----
-
-## Implementation Checklist
-
-- [ ] Copy title tag to CMS
-- [ ] Copy meta description to CMS
-- [ ] Add ALL 6 Open Graph tags
-- [ ] Add Twitter Card tags
-- [ ] Verify canonical URL is correct
-- [ ] Provide og:image URL (1200x630px recommended)
-```
+2. Generate missing infra (schema, meta, OG, robots.txt, llms.txt)
+3. Re-validate against `validation/rules.md`
+4. Update `.ghostwriter/audit-report.md` with post-fix scores
 
 ---
 
