@@ -121,6 +121,54 @@ Proceed with this plan? [Yes / Adjust]
 4. If score < 90%, fix issues automatically
 5. Re-validate after fixes
 
+### Phase 4.5: Technical Infrastructure Gate (MANDATORY)
+
+**After validation passes, run the Delivery Gate from SKILL.md before delivering.**
+
+This gate ensures technical infrastructure is delivered as **generated code**, not deferred to a checklist.
+
+```
+For EVERY deliverable, verify and generate:
+
+1. TITLE CHECK
+   - Count characters (hard max 60)
+   - Count brand occurrences (max 1)
+   → If fail: rewrite title immediately
+
+2. <head> META BLOCK
+   - Canonical tag with real URL
+   - ALL 6 OpenGraph tags as HTML code
+   - Content freshness meta (og:updated_time / article:modified_time)
+   - Twitter Card tags
+   → If ANY missing: generate the complete HTML block
+
+3. SCHEMA.ORG
+   - JSON-LD present and valid for content type
+   → If missing: generate from templates/schemas/
+
+4. EXTERNAL LINKS
+   - Landing pages: ≥1 external link
+   - Articles: ≥2 external links
+   → If zero: ADD authoritative external links to the content body
+
+5. LINK INTEGRITY
+   - No placeholder URLs (example.com, #, javascript:void)
+   - No known-dead domains
+   → If found: replace with real URLs or explicit [TODO] markers
+
+6. SERVER CONFIG SECTION
+   - robots.txt template included
+   - Sitemap guidance included
+   - WWW canonicalization snippet included (stack-specific)
+   - Last-Modified header guidance included
+   → If ANY missing: generate the code/config
+
+RESULT: All checks pass → proceed to Phase 5.
+         Any BLOCKER fails → fix, then re-check before proceeding.
+```
+
+**Why this gate exists:** In previous audits (Rank Math 68/100), all failing items were covered by existing rules but were output as "checklist items for later" instead of generated code. This gate forces code generation.
+
 ### Phase 5: Delivery
 
 **Present to user:**
@@ -203,16 +251,19 @@ Proceed with this plan? [Yes / Adjust]
 
 ### Phase 4: Recommendations
 
-**Present prioritized fixes:**
+**Present prioritized fixes with generated code for all BLOCKER items:**
 
 ```
 ## Audit Report: [Page Title]
 
-### Score: X/40 (X%)
+### Score: X/52 (X%)
 
-### Critical Issues (Fix First)
-1. [Issue] - [Specific fix]
-2. [Issue] - [Specific fix]
+### BLOCKER Issues (Must Fix — Code Provided)
+
+For each BLOCKER, provide the ACTUAL CODE to fix it, not just a description:
+
+1. [Issue] - [Generated HTML/config code to fix it]
+2. [Issue] - [Generated HTML/config code to fix it]
 
 ### High Priority
 3. [Issue] - [Specific fix]
@@ -223,6 +274,23 @@ Proceed with this plan? [Yes / Adjust]
 
 ### Low Priority / Enhancements
 6. [Issue] - [Specific fix]
+
+---
+
+### Generated Fix Code
+
+If the audit found missing OG tags, sitemap, robots.txt, WWW redirect, or freshness meta:
+provide the complete code blocks here (same format as generation/landing-page.md
+Technical Infrastructure Code section). Do NOT just say "add OG tags" — generate them.
+
+---
+
+### Post-Deploy Checks
+
+- [ ] Run broken link scan: `npx broken-link-checker [url] --ordered --recursive`
+- [ ] Verify WWW redirect: `curl -I https://www.[domain]` should show 301
+- [ ] Verify sitemap: `curl https://[domain]/sitemap.xml` should return XML
+- [ ] Verify robots.txt: `curl https://[domain]/robots.txt`
 
 ---
 
