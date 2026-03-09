@@ -2,7 +2,7 @@
 
 ## Overview
 
-Template per generare report bug con `/emmet report`.
+Template per il report bug generato automaticamente da `/emmet test`.
 
 ---
 

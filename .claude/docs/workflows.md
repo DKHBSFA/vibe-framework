@@ -296,11 +296,11 @@ flowchart TD
 
 ### Stack Detection
 
-How `/adapt-framework` detects and configures for the project stack.
+How `/emmet setup` detects and configures for the project stack.
 
 ```mermaid
 flowchart TD
-    A["/adapt-framework"] --> B[Scan config files]
+    A["/emmet setup"] --> B[Scan config files]
 
     B --> C{package.json?}
     C -->|Yes| D[Node.js detected]

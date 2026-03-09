@@ -28,10 +28,12 @@
 | Fix bugs | Read `.claude/docs/bugs/bugs.md` → fix → add `**Sistemato:**` |
 | Create a video | Run `/orson create` → guided flow |
 | Write optimized content | Run `/ghostwriter write [type]` → dual SEO+GEO |
+| Optimize existing content | Run `/ghostwriter optimize [target]` → audit + fix |
 | Optimize conversions | Run `/baptist audit` → CRO diagnosis |
 | Audit tech debt | Run `/emmet techdebt` → review report |
 | Map codebase for testing | Run `/emmet map` → review functional map |
-| Run QA cycle | Run `/emmet test` (or `--static` / `--browser`) |
+| Run QA cycle | Run `/emmet test` (or `--static` / `--functions` / `--personas` / `--unit`) |
+| Fix found bugs | Run `/emmet fix` → automatic resolution |
 | Security audit | Run `/heimdall audit` → review report |
 | Create/edit documents | Describe file type → Scribe routes automatically |
 | Audit skill quality | Run `/forge audit` → review plan → `/forge fix` |

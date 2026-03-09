@@ -112,9 +112,9 @@ List the most important paths that MUST work:
 4. Document all failures
 
 ### Phase 4: Report Generation
-1. Run `/emmet report`
-2. Review findings
-3. Prioritize fixes
+1. Review `.emmet/test-report.md`
+2. Prioritize fixes
+3. Run `/emmet fix` for automated resolution
 
 ---
 
