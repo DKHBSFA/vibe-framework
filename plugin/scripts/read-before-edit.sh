@@ -47,7 +47,7 @@ if [[ -z "$TRANSCRIPT_PATH" || ! -f "$TRANSCRIPT_PATH" ]]; then
 fi
 
 FULL_READ=$(FILE_ARG="$FILE" TRANSCRIPT_ARG="$TRANSCRIPT_PATH" python3 <<'PYEOF'
-import json, os
+import json, os, glob
 
 file_path = os.environ["FILE_ARG"]
 transcript = os.environ["TRANSCRIPT_ARG"]
@@ -73,8 +73,8 @@ def file_lines():
             target_line_count = -1
     return target_line_count
 
-try:
-    with open(transcript) as f:
+def scan_one(path):
+    with open(path) as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -100,8 +100,6 @@ try:
                 if norm(inp.get("file_path")) != target:
                     continue
                 if name == "Write":
-                    # Write implies the assistant has just authored the exact
-                    # content; Edit on the same file is safe without a prior Read.
                     print("yes")
                     raise SystemExit
                 limit = inp.get("limit")
@@ -114,6 +112,21 @@ try:
                     if lc >= 0 and limit >= lc:
                         print("yes")
                         raise SystemExit
+
+def all_transcripts(primary):
+    yield primary
+    base = primary[:-len(".jsonl")] if primary.endswith(".jsonl") else primary
+    for p in sorted(glob.glob(os.path.join(base, "subagents", "agent-*.jsonl"))):
+        yield p
+
+try:
+    for t in all_transcripts(transcript):
+        try:
+            scan_one(t)
+        except SystemExit:
+            raise
+        except Exception:
+            pass
     print("no")
 except SystemExit:
     pass
