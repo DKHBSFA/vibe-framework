@@ -1,5 +1,23 @@
 # Changelog
 
+## 5.6.1 — 2026-04-30
+
+"Per-skill empirical model selection (model-routing benchmark Phase 1)." Two creative skills moved from Opus 4.7 to Sonnet 4.6 by default, after a benchmark confirmed each preserves ≥95% of Opus 4.7's output quality on representative tasks. Methodology adapts Tessl's 880-eval study for VIBE creative skills: outputs are scored on binary-axis adherence rubrics, with a dual-judge bias check (Opus 4.7 + Sonnet 4.6, plus Haiku 4.5 as third judge for the seurat tiebreaker).
+
+### Changes
+
+- **`plugin/skills/seurat/SKILL.md`** — `model.primary: opus-4-7` → `sonnet-4-6`. UI design system. Three-judge consensus (2 of 3 favor Sonnet) with mean preservation 0.966 across judges.
+
+- **`plugin/skills/baptist/SKILL.md`** — `model.primary: opus-4-7` → `sonnet-4-6`. Conversion rate optimization. Both judges agreed: preservation 0.96 (Opus judge) and 1.00 (Sonnet judge), comfortably ≥ 0.95.
+
+- **`plugin/skills/ghostwriter/SKILL.md`** and **`plugin/skills/orson/SKILL.md`** — unchanged. Both judges placed Sonnet 4.6 below the 95% preservation threshold on these skills (0.80 and 0.88 respectively), so Opus 4.7 remains the default.
+
+**User-facing impact:** invoking `/vibe:seurat` or `/vibe:baptist` now runs on Sonnet 4.6 by default — roughly 3× cheaper and faster than Opus 4.7, with equivalent quality on the benchmark prompts. The other skills (`ghostwriter`, `orson`, `audit`, `emmet`, `heimdall`, `forge`, infrastructure skills) are unchanged. No slash-command API changes.
+
+**Bonus finding:** Tessl Finding #2 ("weaker models benefit most from skill loading") confirmed for VIBE creative skills. With/without-skill comparison showed Opus 4.6 jumped +16-20 percentage points on adherence with the skill loaded (e.g., on seurat: 0.84 → 1.00; on baptist: 0.80 → 1.00). Opus 4.7 was already saturated near 100% in both conditions, so the lift is masked.
+
+**Maintenance fix bundled:** `tests/maintainer-scripts/release.sh` (gitignored) now serves as single-shot release automation. It propagates a version bump to `plugin/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` `plugins[0].version`, creates the git tag, pushes, and creates the GitHub release from the CHANGELOG entry. Closes a long-standing drift between plugin.json (current) and GitHub Releases (was at v5.5.4, four versions behind).
+
 ## 5.6.0 — 2026-04-26
 
 "Sycophantic-capitulation mitigation + verification discipline" — five integrated fixes targeting the model-level pattern where Claude makes confident-wrong assertions about repo state, then capitulates ("avevo torto, hai ragione") under user pushback without verifying. Distinct from rhetoric-guard 5.2's coverage (giving up, ownership-dodging, permission-seeking); this release closes the EPISTEMIC gap.
