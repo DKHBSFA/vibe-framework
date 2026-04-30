@@ -51,3 +51,7 @@ Thumbs.db
 # Entry was accidentally dropped during the 5.0.0 layout refactor (359b84b);
 # restored in 5.5.1 to prevent accidental leaks on git add -A.
 /references/
+
+# Loose maintainer-internal directories (not distributed)
+/plans/
+/notes/
