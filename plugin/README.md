@@ -14,6 +14,20 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 
 `/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets model to `opus` with `effort:max`, configures a status line, and optionally maps your codebase. Restart Claude Code after setup for global settings to take effect.
 
+## What's New in 5.6
+
+**Per-skill empirical model selection (5.6.1, 2026-04-30).** Two creative skills moved from Opus 4.7 to Sonnet 4.6 by default after a benchmark adapted from Tessl's 880-eval study confirmed each preserves ≥95% of Opus 4.7's output quality on representative tasks. `/vibe:seurat` and `/vibe:baptist` now run on Sonnet 4.6 — roughly 3× cheaper and faster, equivalent quality on the benchmark prompts. Three-judge consensus (Opus 4.7 + Sonnet 4.6 + Haiku 4.5 tiebreaker on seurat) with mean preservation 0.96 across judges. `ghostwriter` and `orson` stayed on Opus 4.7 (preservation 0.80 and 0.88, below the 0.95 threshold). No slash-command API changes. **Bonus finding:** Tessl Finding #2 ("weaker models benefit most from skill loading") confirmed for VIBE creative skills — Opus 4.6 jumped +16-20pp on adherence with the skill loaded (e.g., seurat 0.84 → 1.00; baptist 0.80 → 1.00). Opus 4.7 was already saturated near 100% in both conditions, so the lift is masked.
+
+**Sycophantic-capitulation mitigation (5.6.0, 2026-04-26).** Seven integrated fixes (A–G) targeting the model-level pattern where Claude makes confident-wrong assertions about repo state then capitulates (*"I was wrong, you're right"*) under user pushback without verifying. Distinct from rhetoric-guard 5.2's coverage (giving up, ownership-dodging, permission-seeking); this release closes the **epistemic** gap.
+
+- **(A) Hardened competitor-research chain language.** Seurat (Setup + Brand), Ghostwriter (Write/Phase 2), Baptist (Audit Step 1) referenced the shared protocol via blockquote `> **Read** ...` — read as an aside, skim-prone. Replaced with **MANDATORY PRELUDE** numbered steps: imperative `Use the Read tool now on PATH`, freshness check on `.vibe/competitor-research/metadata.json`, and "Do NOT continue to Step N until storage is complete". Same chain, unmissable language.
+- **(B) Pragmatic priming Tier B promoted default-ON.** `pragmatic-priming.sh` UserPromptSubmit hook (5.5.1 A/B measured 90% hedge-word reduction on Opus 4.7) now ships active per Iron Man Mandate + User Burden Zero. Disable via `VIBE_PRAGMATIC_MODE=0`.
+- **(C) New rhetoric-guard category: `sycophantic-capitulation` (21 patterns).** §15.0 in `rhetoric-guard.sh` catches retroactive capitulation about a CLAIM already made — backward-looking sycophantic agreement, distinct from existing forward-looking ownership-dodging. Patterns: `i was wrong`, `you're absolutely right`, `let me correct myself`, `i apologize for the (confusion|error)`, plus Italian variants `avevo torto`, `mi correggo`, `hai ragione`. Correction injected: *"VERIFY BEFORE AGREEING. Cite the specific evidence (file:line, tool output) that justifies the reversal. If no evidence, do not capitulate — restate your prior position with reasoning."* All 21 added to `HIGH_RISK_PATTERNS` for Stage-3 meta-keyword suppression (don't fire when discussed in audit/post-mortem context). Pattern total: 56 → 79. Per-category disable: `VIBE_RG_CAPITULATION_DISABLED=1`.
+- **(D) Verification Discipline section in CLAUDE.md template.** New managed section in `claude-md-template.md` between Capability Audit and VIBE Limits. Imperative bullets: file existence → Read/Glob, function/symbol presence → Grep, architecture claims → cite line numbers, cross-references → check both ends. Plus pushback discipline: *"User disagreement is not evidence the user is right. Cite the specific fact (file:line, tool output) that supports the reversal — or restate your prior position with reasoning."* Propagates to all VIBE-managed CLAUDE.md files on next `/vibe:setup` run.
+- **(E) New Stop hook: `verify-before-assert.sh`.** Detects backtick-quoted file/symbol assertions in the final assistant message without preceding Read/Grep/Glob/LS in recent transcript turns (last 20). Default mode: **log-only** — writes events to `${CLAUDE_PLUGIN_DATA}/verify-before-assert/vba-events-${SESSION_ID}.jsonl` for maintainer FP-rate review. Block mode opt-in via `VIBE_VBA_BLOCK=1`. Disable: `VIBE_VBA_DISABLED=1`. Hook count: 16 → 17.
+- **(F) Chain extended to 4 additional modes.** `seurat generate`, `ghostwriter optimize`, `baptist test`, `baptist funnel` previously lacked the competitor-research chain. Each now has a MANDATORY PRELUDE block. Pure-introspection modes (`seurat extract/preview/map`, `ghostwriter validate`, `baptist analyze`) intentionally skip — they don't produce sector-baseline-dependent output.
+- **(G) Audit orchestrator + 3 agents share research cache.** `/vibe:audit` runs the protocol ONCE (or confirms fresh cache) before dispatching seurat/ghostwriter/baptist agents in parallel — synchronization point preventing 3-way race. Agents read `.vibe/competitor-research/metadata.json` for freshness and tag findings `[BENCHMARK]`. Standalone agent invocation degrades gracefully to standards-only with visible header note `Benchmark coverage: not available`.
+
 ## What's New in 5.5
 
 **Session model default persistence (§2.8b).** `/vibe:setup` now actually writes `settings["model"] = "opus"` to your user settings. Previously the wizard showed "Model set to opus" but the reconciler only wrote env vars — the top-level `model` field stayed whatever Claude Code defaulted to. New reconciler sub-commands `detect-top-level` + `apply-top-level` close this `feedback_honesty_patterns` Pattern 2 gap, and `cmd_present_diff` renders the top-level change in the diff before you approve (no silent writes). Effect: every `claude` invocation now starts on Opus by default, without users needing to remember the `--model opus` flag.
@@ -59,6 +73,18 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 The hook has two modes. **Proposer** fires when `superpowers:writing-plans` is invoked and tells Claude to write every task idiot-proof (exact paths, complete code, concrete verify commands — no "TBD" or "fill in") and to offer a three-option execution handoff at the end. **Guard** fires when `superpowers:subagent-driven-development` is invoked and tells Claude to audit the plan before dispatching subagents; if any task is vague, abort and recommend inline. Belt-and-suspenders: proposer introduces the option and shapes the plan; guard catches bad dispatches that slip through.
 
 Empirically validated on the VIBE 5.1 self-healing wizard (13 tasks, 5h, 204 tests green — one plan bug caught by a subagent that pure-inline would have missed). Opt-out: `export VIBE_NO_HYBRID_HINT=1`.
+
+### 5.5.5 Read-before-edit false-positive fix (2026-04-22)
+
+Two surgical patches to `plugin/scripts/read-before-edit.sh` resolving spurious blocks reported by users in production. **Patch A — path normalization** via `realpath+expanduser` to handle path-shape mismatch (tilde vs absolute, symlink vs target, double-slash). **Patch B — coverage-equals-file**: a `Read` with `offset in (None, 0)` and `limit >= line_count(file)` now counts as a full read (the comment header promised this since 5.4.0, never implemented). Zero scope-creep — no other script touched, no manifest change.
+
+### 5.5.6 Hybrid-hint manifest quoting (2026-04-22)
+
+Single-line fix in `plugin/hooks/hooks.json:50`: added quoting to the `hybrid-execution-hint` command, missing since 5.5.4 (latent fragility on `CLAUDE_PLUGIN_ROOT` paths with spaces — Windows `~/Username With Space/...` etc). All other VIBE PreToolUse hooks audited live with file paths containing spaces and verified safe — `hybrid-execution-hint` was the only outlier. Diagnostic for upstream user-settings hooks (matcher `TaskCreate`/`ToolSearch` errors not produced by VIBE) documented in the CHANGELOG; auto-fix shipped in 5.5.7.
+
+### 5.5.7 V1 hook auto-cleanup + Write-then-Edit FP (2026-04-22)
+
+Two report-driven fixes. **Fix A:** `read-before-edit.sh` now recognizes `Write` as equivalent to a full read — assistant just wrote the content → knows the file → subsequent `Edit` is safe. Caught while authoring 5.5.7 itself: a Write+Edit sequence on `feedback_user_burden_zero.md` was being blocked legitimately. **Fix B:** `/vibe:setup` now auto-detects and removes residual VIBE v1 (morpheus) hooks from user `~/.claude/settings.json` and project settings — no manual action required, just re-run `/vibe:setup` after upgrade. Closes a User Burden Zero violation: the pre-existing `vibe-v1-cleanup.sh` script handled filesystem-side cleanup but required users to know about it; the reconciler now handles user-settings hooks as part of the standard `detect → diff → present → apply` flow. New schema field `settingsHooksDenyPatterns[]` makes future deprecated-pattern additions a 1-diff JSON change. Backup always created (`settings.json.bak-stale-hooks-YYYYMMDD-HHMMSS`).
 
 ## What's New in 5.3
 
@@ -171,7 +197,8 @@ The audit system uses **delta analysis**: on repeated audits it reads agent memo
 
 | Skill | What it does |
 |-------|-------------|
-| **setup** | First-run configuration wizard. Detects stack, linters, LSP, configures model/effort/status line, generates minimal CLAUDE.md (even on empty projects), optionally maps codebase. |
+| **setup** | First-run + upgrade configuration wizard. Self-healing: detects stack, linters, LSP, configures model/effort/status line, generates minimal CLAUDE.md, optionally maps codebase, auto-cleans v1 morpheus hooks (5.5.7), preserves user-authored content via region markers. Re-runnable; converges to the current plugin version's expected state. |
+| **spec** | Intelligent spec routing (5.5.0). Classifies the request and dispatches to the optimal Opus variant via hybrid classifier (keyword fast-path → `haiku-4-5` LLM fallback → `opus-4-7` final fallback). Plan-for-executor discipline embedded inline. Env override: `VIBE_SPEC_FORCE_MODEL`. |
 | **pause** | Disables all quality hooks for the current session. For rapid prototyping or exploratory coding where hooks get in the way. |
 | **resume** | Re-enables quality hooks after pause. |
 | **help** | Displays all VIBE Framework skills, agents, hooks, and commands in one clean reference. Use for onboarding or quick discovery (`/vibe:help`). |
@@ -228,35 +255,47 @@ All agents run in isolated worktrees, persist memory across sessions, and produc
 
 ## Model Tiering
 
-Not every task needs the most powerful model. VIBE assigns each component the model that matches its cognitive demands, validated via blind A/B testing.
+Not every task needs the most powerful model. VIBE assigns each component the smallest model that preserves quality on representative tasks, validated via blind A/B testing (Tessl-style 880-eval rubric for creative skills since 5.6.1).
 
 | Tier | Model | Components | Why |
 |------|-------|------------|-----|
-| **Creative & Complex** | Opus | ghostwriter, seurat, heimdall, audit orchestrator | Creative writing, design judgment, novel vulnerability discovery, cross-domain synthesis |
-| **Structured Execution** | Sonnet | baptist, emmet, scribe, orson, reviewer, researcher, forge | Pattern matching, template following, code analysis, format compliance |
-| **High-Volume Search** | Haiku | competitor research discovery agents | Web search + candidate identification across multiple languages |
+| **Creative** | Opus 4.7 | ghostwriter, orson, forge, spec, audit orchestrator | Creative writing, design judgement, novel synthesis. Saturated near 100% on adherence rubrics. |
+| **Instruction-heavy** | Opus 4.6 | heimdall, emmet | Longer prompts, higher instruction adherence, less hedging on Opus 4.6 vs 4.7 (validated A/B). |
+| **Structured execution** | Sonnet 4.6 | seurat, baptist, scribe, reviewer, researcher, decomposer | Pattern matching, template following, code analysis, format compliance. |
+| **High-volume search** | Haiku 4.5 | competitor-research discovery agents | Web search + candidate identification across multiple languages. |
 
-**Validation**: Heimdall was A/B tested — Opus found a 3-step token confusion attack chain that Sonnet missed (5.0 vs 4.5). Baptist was A/B tested — both models scored identically on CRO analysis (4.9 vs 4.9). Test fixtures and protocol are in `tests/model-validation/`.
+Skill and agent tiers can diverge: e.g. the `seurat` skill runs on Sonnet 4.6 (template-driven design system generation) but the `seurat` audit agent runs on Opus (cross-domain judgement in an isolated worktree).
 
-**Recalibration**: when new models ship, rerun the test cases in `tests/model-validation/test-cases.md` to verify assignments still hold. The model map at `tests/model-validation/model-map.md` is the source of truth.
+**Validation**:
+- 5.6.1 — `seurat` and `baptist` skills moved Opus 4.7 → Sonnet 4.6 after dual-judge benchmark (Opus + Sonnet judges, Haiku tiebreaker on seurat) confirmed ≥0.96 quality preservation. `ghostwriter` and `orson` stayed on Opus 4.7 (preservation 0.80 and 0.88, below the 0.95 threshold).
+- 5.5.1–5.5.2 pairwise A/B (Opus 4.7 vs 4.6) — Opus 4.7 wins on `audit`, `seurat`, `forge`, `baptist`, `ghostwriter`, `orson` (validated incumbents, zero default switches).
+- 5.0 baseline — Heimdall A/B found Opus catches a 3-step token-confusion chain Sonnet misses; later refined to Opus 4.6 default for instruction-adherence on long security audits.
+
+**Recalibration**: when new models ship, rerun the benchmark fixtures in `tests/model-validation/`. The model map at `tests/model-validation/model-map.md` is the source of truth.
 
 ## Hooks
 
-Eleven hook handlers across seven lifecycle events run automatically. Every hook is a mechanical process constraint — a regex or exit-code gate — not a place for semantic judgment (that belongs to the agent and its memory system).
+Seventeen hook handlers across nine lifecycle events run automatically. Every hook is a mechanical process constraint — a regex or exit-code gate — not a place for semantic judgment (that belongs to the agent and its memory system).
 
 | Hook | When | What it does |
 |------|------|-------------|
 | **Setup check** | Session start | Silent on normal state. Emits guidance only on anomalies: VIBE settings missing, v1 framework remnants, missing CLAUDE.md, post-compaction recovery (`session-state.md` < 5 min old), and version drift between `~/.claude/vibe-configured` and the installed plugin version on first post-upgrade session. |
 | **PreToolUse security** | Before bash commands | Blocks dangerous operations before execution: `rm -rf /`, force push to main, `curl\|bash`, `chmod 777`, database DROP, fork bomb, credential file access, network listeners, kill-all-processes. Exit 2 = block. |
+| **Read discipline** | Before Read | Blocks partial Reads on files smaller than 400KB — forces full read so the model has the whole file before making claims. Skip via `VIBE_READ_DISCIPLINE_DISABLED=1` or by mentioning explicit line ranges in the prompt. |
+| **Read before edit** | Before Edit/Write | Blocks Edit/Write on a file that hasn't been Read (or Written) in this session at full coverage. Path normalization via `realpath+expanduser` (5.5.5); Write counts as full-read equivalent (5.5.7). Skip via `VIBE_READ_BEFORE_EDIT_DISABLED=1`. |
+| **Hybrid execution hint** | Before Skill | Fires on `superpowers:writing-plans` to inject a three-option execution handoff (subagent / inline / hybrid) and on `superpowers:subagent-driven-development` to audit plan idiot-proofness before dispatch. Opt-out: `VIBE_NO_HYBRID_HINT=1`. |
+| **Pragmatic priming** | User prompt submit | Default-ON since 5.6.0. Injects a ~30-token Askell-style preamble per turn to reduce hedging + sycophancy on Opus 4.7 (5.5.1 A/B measured 90% hedge-word reduction). Cached via prompt caching. Disable: `VIBE_PRAGMATIC_MODE=0`. |
 | **Lint** | After file edit | Detects project linter (eslint, prettier, ruff, black, rustfmt, gofmt) and runs it. Skips if no linter installed for the file type. Exit 2 = block on failure. |
 | **Security scan** | After file edit | 31-pattern scan for hardcoded keys (API, AWS AKIA, GCP AIza, Stripe sk_live, GitHub ghp_, Slack xox, JWT, private keys), XSS (`innerHTML`, `document.write`, `dangerouslySetInnerHTML`), injection (eval, SQL interpolation, pickle, yaml.load, subprocess shell=True), credentials (Bearer tokens), misconfig (SSL verify=false, Supabase `USING(true)`), obfuscation (Unicode whitespace, control chars, IFS, jq @system). Exit 2 = block. |
 | **Compact save** | Before compaction | Writes a minimal structured snapshot before Claude Code compacts the context window: timestamp, session ID, git branch + status + diff names, and pointers to the authoritative sources (transcript path, `TaskList`, auto-memory). Does not try to summarize — the transcript file is the real record. |
 | **Failure loop** | After tool failures | Increments a per-session counter on Bash/Edit/Write failures. Exit 2 at 3 consecutive failures with a replanning message. Resets to 0 on any successful tool use. |
 | **Failure reset** | After tool success | Paired with failure loop. Zeroes the counter on successful tool invocations. |
-| **Rhetoric guard** | Session stop | Matches the last assistant message against 54 rhetorical patterns (ownership dodging, session-length quitting, permission-seeking mid-task) verbatim from benvanik's production-tested `stop-phrase-guard.sh`. On match, emits `{"decision":"block","reason":"..."}` with a targeted correction tied to the matched phrase. Rate-capped at 3 fires per session, then fail-open. Runs before Atomic enforcement on the Stop event; the two are orthogonal. |
+| **Rhetoric guard** | Session stop | Matches the last assistant message against 79 rhetorical patterns (ownership dodging, session-length quitting, permission-seeking mid-task, sycophantic capitulation since 5.6.0) — 54 verbatim from benvanik's production-tested `stop-phrase-guard.sh` plus 25 VIBE-side additions. On match, emits `{"decision":"block","reason":"..."}` with a targeted correction tied to the matched phrase. Rate-capped at 3 fires per session, then fail-open. Per-category disable: `VIBE_RG_CAPITULATION_DISABLED=1`. |
+| **Side-effect verify** | Session stop | Detects when the assistant commits to a write/save/persist operation in prose (*"I'll save the config"*) without invoking a `Write`/`Edit`/`NotebookEdit` tool in the same turn. Reuses rhetoric-guard Strategy E preprocessing to avoid self-citation FPs. Capped at 1 fire per session. Closes `claude-code#49764`. |
+| **Verify before assert** | Session stop | Log-only by default since 5.6.0. Detects backtick-quoted file/symbol assertions in the final assistant message without preceding Read/Grep/Glob/LS in recent transcript turns (window: last 20). Writes events to `${CLAUDE_PLUGIN_DATA}/verify-before-assert/`. Block mode opt-in via `VIBE_VBA_BLOCK=1`. Disable: `VIBE_VBA_DISABLED=1`. |
 | **Atomic enforcement** | Session stop | Validates that atomic-decomposition tasks produced output for every item declared in the manifest. Blocks a completion claim that would leave items unprocessed. |
 | **Agent memory sync** | Subagent stop | Copies `.claude/agent-memory/vibe-*/` from the subagent's isolated worktree back to the main project, so domain audit agents can persist per-run findings across sessions. Non-blocking. |
-| **Hybrid execution hint** | Before Skill tool calls | Fires on `superpowers:writing-plans` to inject a three-option execution handoff (subagent / inline / hybrid) and on `superpowers:subagent-driven-development` to audit plan idiot-proofness before dispatch. Opt-out: `VIBE_NO_HYBRID_HINT=1`. |
+| **Session end cleanup** | Session end | Clears per-session state files (`/tmp/vibe-paused-${SESSION_ID}`, atomic-decomp scratch, rhetoric-guard fire counters). |
 
 Use `/vibe:pause` to temporarily disable all hooks for the session, `/vibe:resume` to re-enable. Pause writes `/tmp/vibe-paused-${SESSION_ID}` which every hook checks as its first action.
 
