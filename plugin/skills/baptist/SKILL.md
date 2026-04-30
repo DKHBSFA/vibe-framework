@@ -3,7 +3,7 @@ name: baptist
 description: Conversion Rate Optimization. Diagnoses conversion problems, designs A/B experiments, analyzes funnels, and prioritizes fixes using Fogg B=MAP model. Use when optimizing conversions or designing A/B tests.
 effort: max
 model:
-  primary: opus-4-7
+  primary: sonnet-4-6
   effort: xhigh
 whenToUse: "Use when optimizing conversions or designing A/B tests. Examples: '/vibe:baptist diagnose', '/vibe:baptist experiment', '/vibe:baptist funnel'"
 argumentHint: "[diagnose|experiment|funnel|audit|benchmark]"
